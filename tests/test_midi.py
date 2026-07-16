@@ -6,6 +6,7 @@ import mido
 import numpy as np
 import pytest
 
+import lattice
 from lattice import make_beat
 from lattice.arrange import build_timeline
 from lattice.beat import Beat
@@ -117,3 +118,25 @@ def test_preview_renders_wav(tmp_path: Path) -> None:
     ok = b.preview(str(wav))
     if ok:
         assert wav.exists() and wav.stat().st_size > 1000
+
+
+def test_molina_preview_uses_grand_piano(tmp_path: Path) -> None:
+    from lattice import make_beat
+
+    b = make_beat(style="molina", key="Cm", bpm=80, n=1, seed=5)[0]
+    p = tmp_path / "molina_prog_test.mid"
+    b.to_midi(str(p))
+    mid = mido.MidiFile(str(p))
+    programs = {
+        (m.channel, m.program)
+        for t in mid.tracks
+        for m in t
+        if m.type == "program_change"
+    }
+    assert (0, 0) in programs
+
+
+def test_json_records_engine_version() -> None:
+    b = _beat()
+    data = json.loads(b.to_json())
+    assert data["engine"] == lattice.__version__

@@ -79,3 +79,9 @@ def test_every_card_center_voices_every_pool_function() -> None:
                 for name in pool:
                     chord = build_function(key, name).chord
                     assert stack_candidates(chord, card, True), f"{card.name} {center} {name}"
+
+
+def test_molina_m7_gets_add9_color() -> None:
+    cm7 = build(parse_tpc("C"), "m7")
+    stacks = stack_candidates(cm7, MOLINA, bass_covers_root=True)
+    assert any(len(s) == 4 and any(p.midi % 12 == 2 for p in s) for s in stacks)

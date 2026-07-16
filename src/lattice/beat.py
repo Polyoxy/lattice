@@ -4,13 +4,14 @@ import json
 import shutil
 import subprocess
 from dataclasses import asdict, dataclass, field, replace
+from importlib import metadata
 from pathlib import Path
 
 from lattice.cards import StyleCard
 from lattice.groove.pocket import PocketReport
 from lattice.harmony.elaborate import Segment
 from lattice.harmony.grammar import Loop
-from lattice.midi import write_midi
+from lattice.midi import programs_for_card, write_midi
 from lattice.model import Event, Role, Timeline
 from lattice.theory.chord import symbol
 from lattice.theory.key import Key, key_name
@@ -56,7 +57,7 @@ class Beat:
         return {r: tuple(sorted(v, key=lambda e: e.tick)) for r, v in out.items()}
 
     def to_midi(self, path: str) -> None:
-        write_midi(self.unrolled(), self.bpm, path)
+        write_midi(self.unrolled(), self.bpm, path, programs=programs_for_card(self.card.name))
 
     def to_json(self) -> str:
         def ev(e: Event) -> dict[str, object]:
@@ -70,6 +71,7 @@ class Beat:
             "card": asdict(self.card),
             "key": key_name(self.key),
             "bpm": self.bpm,
+            "engine": metadata.version("lattice"),
             "bars": self.bars,
             "seed": self.seed,
             "index": self.index,

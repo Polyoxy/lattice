@@ -40,7 +40,8 @@ def apply_pocket(
                 micro += snap_ms
             elif e.drum is DrumSound.CLAP:
                 micro += clap_ms
-            micro += float(rng.normal(0.0, card.timing_sigma_ms))
+            sigma = card.timing_sigma_ms
+            micro += float(np.clip(rng.normal(0.0, sigma), -6.0 * sigma, 6.0 * sigma))
             vel = int(np.clip(round(e.vel * (1.0 + rng.normal(0.0, card.vel_jitter))), 1, 127))
             new.append(replace(e, micro_ms=micro, vel=vel))
         out[role] = tuple(new)

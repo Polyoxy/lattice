@@ -46,7 +46,7 @@ def same_pitch_class(a: Tpc, b: Tpc) -> bool:
     return (a - b) % 12 == 0
 
 
-@dataclass(frozen=True, slots=True, order=True)
+@dataclass(frozen=True, slots=True)
 class SpelledPitch:
     tpc: Tpc
     octave: int

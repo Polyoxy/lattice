@@ -4,7 +4,7 @@ from lattice.cards import StyleCard
 from lattice.harmony.elaborate import Segment
 from lattice.theory.chord import symbol
 from lattice.theory.pitch import SpelledPitch
-from lattice.voicing.templates import stack_candidates
+from lattice.voicing.templates import sparseness, stack_candidates
 
 Stack = tuple[SpelledPitch, ...]
 
@@ -31,12 +31,13 @@ def realize(
     best_cost = float("inf")
     best_path: list[Stack] = []
     for first in cands[0][:8]:
-        current: list[tuple[float, list[Stack]]] = [(0.0, [first])]
+        current: list[tuple[float, list[Stack]]] = [(sparseness(len(first), card), [first])]
         for stage in cands[1:]:
             nxt: list[tuple[float, list[Stack]]] = []
             for cost, path in current:
                 for cand in stage:
-                    nxt.append((cost + movement(path[-1], cand), [*path, cand]))
+                    step = movement(path[-1], cand) + sparseness(len(cand), card)
+                    nxt.append((cost + step, [*path, cand]))
             nxt.sort(key=lambda t: t[0])
             current = nxt[:24]
         for cost, path in current:

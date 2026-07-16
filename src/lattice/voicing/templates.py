@@ -76,6 +76,10 @@ def _us_triad(chord: Chord, bottom_octave: int) -> tuple[SpelledPitch, ...]:
     return tuple(sorted(merged, key=lambda p: p.midi))
 
 
+def sparseness(size: int, card: StyleCard) -> float:
+    return (5 - size) * 2.4 * card.voicing_density
+
+
 def stack_candidates(
     chord: Chord, card: StyleCard, bass_covers_root: bool
 ) -> list[tuple[SpelledPitch, ...]]:
@@ -92,6 +96,26 @@ def stack_candidates(
                 raw.append(_stack_close(rot, octave))
         if "close4" in card.templates and len(tones) == 3:
             for rot in _rotations(tones):
+                raw.append(_stack_close(rot, octave))
+        if (
+            "add9" in card.templates
+            and len(tones) == 3
+            and iv.M9 not in chord.intervals
+            and iv.m2 not in chord.intervals
+            and iv.m6 not in chord.intervals
+            and iv.P5 in chord.intervals
+            and (iv.m7 in chord.intervals or iv.M7 in chord.intervals)
+            and (iv.m3 in chord.intervals or iv.M3 in chord.intervals)
+        ):
+            third = iv.m3 if iv.m3 in chord.intervals else iv.M3
+            seventh = iv.m7 if iv.m7 in chord.intervals else iv.M7
+            q9 = [
+                chord.root + third,
+                chord.root + iv.P5,
+                chord.root + seventh,
+                chord.root + iv.M9,
+            ]
+            for rot in _rotations(q9):
                 raw.append(_stack_close(rot, octave))
         if "spread" in card.templates and len(tones) >= 4:
             raw.append(_stack_close(tones[:4], octave, first_gap_min=12))
@@ -124,5 +148,7 @@ def stack_candidates(
             continue
         seen.add(key)
         good.append(stack)
-    good.sort(key=lambda s: abs(sum(p.midi for p in s) / len(s) - center))
+    good.sort(
+        key=lambda s: abs(sum(p.midi for p in s) / len(s) - center) + sparseness(len(s), card)
+    )
     return good[:24]

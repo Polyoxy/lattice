@@ -45,3 +45,27 @@ def test_speed_budget_for_five_beats() -> None:
     t0 = time.monotonic()
     make_beat(style="faiyaz", key="Am", bpm=72, bars=4, n=5, seed=11)
     assert time.monotonic() - t0 < 30.0
+
+
+def test_empty_length_pool_fails_fast() -> None:
+    import pytest
+
+    from lattice.cards import FAIYAZ
+
+    card = FAIYAZ.override(loop_len_weights=((4, 1.0),), function_pool=("i7",))
+    with pytest.raises(ValueError, match="no loops of length 4"):
+        make_beat(style=card, key="Am", bpm=72, n=1, seed=0)
+
+
+def test_bpm_below_minimum_rejected() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="bpm must be >= 20"):
+        make_beat(key="Am", bpm=10, n=1, seed=0)
+
+
+def test_bars_below_minimum_rejected() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="bars must be >= 1"):
+        make_beat(key="Am", bpm=72, bars=0, n=1, seed=0)

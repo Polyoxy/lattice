@@ -1,6 +1,6 @@
 [project]
 name = "lattice"
-version = "0.1.0"
+version = "0.1.1"
 description = "Beat-production engine: theory-constrained generation, style cards, offline render"
 authors = [{ name = "Iverson Alcantara", email = "contact@iversonalcantara.com" }]
 license = "Apache-2.0"

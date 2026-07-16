@@ -23,6 +23,7 @@ class StyleCard:
     register_lo: int
     register_hi: int
     rootless: bool
+    voicing_density: float
     templates: tuple[str, ...]
     bpm_range: tuple[int, int]
     swing_band: tuple[float, float]
@@ -76,6 +77,7 @@ FAIYAZ: Final = StyleCard(
     register_lo=48,
     register_hi=72,
     rootless=True,
+    voicing_density=0.25,
     templates=("close4", "close5"),
     bpm_range=(65, 95),
     swing_band=(0.54, 0.62),
@@ -137,6 +139,7 @@ CONDUCTOR: Final = StyleCard(
     register_lo=48,
     register_hi=76,
     rootless=False,
+    voicing_density=0.4,
     templates=("close4", "close5", "spread"),
     bpm_range=(80, 100),
     swing_band=(0.5, 0.5),
@@ -196,8 +199,9 @@ MOLINA: Final = StyleCard(
     register_lo=43,
     register_hi=79,
     rootless=True,
+    voicing_density=0.9,
     templates=(
-        "close4", "close5", "drop2", "quartal", "us_triad", "sus43",
+        "close4", "close5", "drop2", "quartal", "us_triad", "sus43", "add9",
     ),
     bpm_range=(60, 110),
     swing_band=(0.55, 0.66),
@@ -228,7 +232,8 @@ MOLINA: Final = StyleCard(
         ("function_pool", "cited"), ("elaboration_density", "cited"),
         ("allow_tritone_sub", "cited"), ("bpm_range", "inferred"),
         ("templates", "cited"), ("p_kicker", "gate-only-phase-1"),
-        ("p_phrygian_vamp", "reserved-phase-2"),
+        ("p_phrygian_vamp", "reserved-phase-2"), ("swing_band", "inferred"),
+        ("timing_sigma_ms", "inferred"),
     ),
 )
 

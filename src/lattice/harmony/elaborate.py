@@ -46,7 +46,7 @@ def elaborate(loop: Loop, card: StyleCard, rng: np.random.Generator) -> tuple[Se
         nxt = base[(i + 1) % n][0]
         options: list[tuple[Sub | None, int]] = [(None, 0)]
         if dur > window:
-            for candidate in subs_for(card, loop.key, fc.chord, nxt.chord):
+            for candidate in subs_for(card, loop.key, fc.chord, nxt.chord, nxt.roman):
                 options.append((candidate, window))
         new_paths: list[tuple[float, list[Segment]]] = []
         for score, segs in paths:

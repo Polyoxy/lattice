@@ -53,3 +53,27 @@ def test_deterministic_per_seed() -> None:
     a = elaborate(_loop("Am", ("i7", "v7")), MOLINA, _rng(7))
     b = elaborate(_loop("Am", ("i7", "v7")), MOLINA, _rng(7))
     assert a == b
+
+
+def test_molina_insert_mix_is_pinned() -> None:
+    from collections import Counter
+
+    from lattice.cards import MOLINA
+    from lattice.harmony.functions import build_function
+    from lattice.harmony.grammar import Loop
+    from lattice.theory.key import parse_key
+
+    kinds: Counter[str] = Counter()
+    key = parse_key("Cm")
+    loop = Loop(key, tuple(build_function(key, n) for n in ("i7", "iv7", "v7")), bars=4)
+    for seed in range(40):
+        segs = elaborate(loop, MOLINA, _rng(seed))
+        for s in segs:
+            if s.label.startswith("V7/"):
+                kinds["secondary"] += 1
+            elif "tritone" in s.label:
+                kinds["tritone"] += 1
+            elif s.label not in ("i7", "iv7", "v7"):
+                kinds["other"] += 1
+    assert kinds["secondary"] > 0
+    assert kinds["other"] == 0

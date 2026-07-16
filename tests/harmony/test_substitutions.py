@@ -1,6 +1,7 @@
 import pytest
 
 from lattice.cards import FAIYAZ, MOLINA
+from lattice.harmony.functions import build_function
 from lattice.harmony.substitutions import (
     backdoor,
     passing_dim,
@@ -11,7 +12,7 @@ from lattice.harmony.substitutions import (
 )
 from lattice.theory.chord import build, symbol
 from lattice.theory.key import parse_key
-from lattice.theory.pitch import parse_tpc
+from lattice.theory.pitch import parse_tpc, pitch_class
 
 
 def test_secondary_dominant_of_iv_in_am_is_a7() -> None:
@@ -42,6 +43,19 @@ def test_passing_dim_fills_whole_step() -> None:
     sub = passing_dim(c, d)
     assert sub is not None and symbol(sub.chord) == "C#dim7"
     assert passing_dim(c, build(parse_tpc("F"), "maj7")) is None
+
+
+def test_tritone_sub_of_secondary_dominant_respells_double_flat() -> None:
+    # bVImaj7 is only defined for minor-mode keys (see harmony/functions.py), and its
+    # root in Db minor is Bbb (tpc -9) — a genuine double-flat before any respelling.
+    target = build_function(parse_key("Dbm"), "bVImaj7")
+    sec = secondary_dominant(target.chord)
+    tt = tritone_sub(sec.chord)
+    for sub in (sec, tt):
+        name = symbol(sub.chord)
+        assert "bb" not in name and "x" not in name
+    assert pitch_class(sec.chord.root) == pitch_class(target.chord.root + 1)
+    assert pitch_class(tt.chord.root) == pitch_class(sec.chord.root - 6)
 
 
 def test_card_gating() -> None:

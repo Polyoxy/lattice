@@ -13,7 +13,7 @@ from lattice.harmony.elaborate import elaborate
 from lattice.harmony.grammar import Loop, candidate_loops
 from lattice.harmony.score import loop_score, rank
 from lattice.model import Role
-from lattice.theory.key import Key, parse_key
+from lattice.theory.key import Key, key_name, parse_key
 from lattice.voicing.realize import realize
 
 
@@ -35,6 +35,10 @@ def make_beat(
     n: int = 5,
     seed: int = 0,
 ) -> list[Beat]:
+    if bpm is not None and bpm < 20:
+        raise ValueError("bpm must be >= 20")
+    if bars < 1:
+        raise ValueError("bars must be >= 1")
     card = get_card(style) if isinstance(style, str) else style
     fixed_key = parse_key(key) if key is not None else None
     loops_cache: dict[Key, list[Loop]] = {}
@@ -55,6 +59,8 @@ def make_beat(
                 [lp for lp in loops_cache[k] if len(lp.items) == length], card, max(n, 1)
             )
         ranked = ranked_cache[cache_key]
+        if not ranked:
+            raise ValueError(f"no loops of length {length} for {key_name(k)} with card {card.name}")
         loop = ranked[i % len(ranked)]
         segments = elaborate(loop, card, rng)
         voicings = realize(segments, card)

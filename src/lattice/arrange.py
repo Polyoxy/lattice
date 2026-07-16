@@ -33,13 +33,13 @@ def build_timeline(
             remaining -= 1
             drop_pending = False
         i += 1
+    sections.append(Section("outro", 1, _ALL_BUT_KEYS))
     if rng.random() < card.p_transpose_event:
-        for idx in range(len(sections) - 1, -1, -1):
-            if sections[idx].kind in ("a", "b"):
-                s = sections[idx]
-                sections[idx] = Section(
+        idx = max((j for j, s in enumerate(sections) if s.kind in ("a", "b")), default=None)
+        if idx is not None:
+            for j in range(idx, len(sections)):
+                s = sections[j]
+                sections[j] = Section(
                     s.kind, s.cycles, s.muted, transpose=card.transpose_semitones
                 )
-                break
-    sections.append(Section("outro", 1, _ALL_BUT_KEYS))
     return Timeline(tuple(sections))

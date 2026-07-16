@@ -30,9 +30,9 @@ def explain_beat(beat: Beat) -> str:
     all_pitches = [p for v in beat.voicings for p in v]
     lo = min(all_pitches, key=lambda p: p.midi)
     hi = max(all_pitches, key=lambda p: p.midi)
-    tops = [max(v, key=lambda p: p.midi).midi for v in beat.voicings]
+    tops = [max(v, key=lambda p: p.midi).name() for v in beat.voicings]
     root_note = "rootless" if beat.card.rootless else "rooted"
-    lines.append(f"voicing: {root_note}, {lo.name()}–{hi.name()}, top voice {tops}")
+    lines.append(f"voicing: {root_note}, {lo.name()}–{hi.name()}, top voice {' '.join(tops)}")
 
     prov = dict(beat.card.provenance)
     swing_flag = " (inferred)" if prov.get("swing_band") == "inferred" else ""

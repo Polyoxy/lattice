@@ -21,15 +21,19 @@ def test_bookends_are_keys_only() -> None:
         assert Role.KICK in s.muted and Role.SUB in s.muted
 
 
-def test_transpose_event_lands_on_final_content_section() -> None:
+def test_transpose_carries_from_final_content_to_outro() -> None:
     card = FAIYAZ.override(p_transpose_event=1.0)
     for seed in range(30):
         t = build_timeline(card, bars=4, bpm=72, rng=np.random.default_rng(seed))
-        stamped = [s for s in t.sections if s.transpose]
-        assert len(stamped) == 1
-        assert stamped[0].kind in ("a", "b")
-        content_idx = max(i for i, s in enumerate(t.sections) if s.kind in ("a", "b"))
-        assert t.sections[content_idx].transpose == card.transpose_semitones
+        stamped = [i for i, s in enumerate(t.sections) if s.transpose]
+        assert len(stamped) >= 1
+        first = stamped[0]
+        assert t.sections[first].kind in ("a", "b")
+        for i, s in enumerate(t.sections):
+            if i >= first:
+                assert s.transpose == card.transpose_semitones
+            else:
+                assert s.transpose == 0
 
 
 def test_all_sections_at_least_one_cycle_and_kinds_valid() -> None:
