@@ -21,6 +21,11 @@ it bit-identically. GM preview: `sudo apt install --no-install-recommends
 fluidsynth fluid-soundfont-gm`, then `beat.preview('out/demo/p.wav')`.
 Real rendering (scsynth, texture buses, mastering) is the next phase.
 
+## Cards
+
+- `faiyaz`, `conductor`, `molina` — single-loop, corpus-calibrated to the artists named above.
+- `tunisia` — two-part form (A vamp + B bridge), Latin-jazz harmonic language. Original composition, not a cover — see `docs/specs/2026-07-16-two-part-form-tunisia-design.md`.
+
 ## Layout
 
     src/lattice/theory/    spelled pitch, intervals, chords, keys

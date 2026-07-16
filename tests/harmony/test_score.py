@@ -56,3 +56,17 @@ def test_idiom_shapes_are_reachable_and_fire() -> None:
     rs = _loop("Bm", ("iv6add9", "v7", "i7", "bVImaj7"))
     non_idiom = _loop("Bm", ("iv6add9", "v7", "i7", "bIII"))
     assert loop_score(rs, FAIYAZ) > loop_score(non_idiom, FAIYAZ)
+
+
+def test_contrast_rewards_difference_and_cadence() -> None:
+    from lattice.harmony.score import contrast
+    from lattice.harmony.functions import build_function
+    from lattice.harmony.grammar import Loop
+    from lattice.theory.key import parse_key
+
+    key = parse_key("Dm")
+    vamp = Loop(key, tuple(build_function(key, n) for n in ("i7", "bII")), bars=4)
+    same = Loop(key, tuple(build_function(key, n) for n in ("i7", "bII")), bars=4)
+    bridge = Loop(key, tuple(build_function(key, n) for n in ("iv7", "bVII7", "i7", "V7")), bars=4)
+    assert contrast(vamp, bridge) > contrast(vamp, same)
+    assert contrast(vamp, same) < 1.0

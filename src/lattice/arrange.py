@@ -33,6 +33,12 @@ def build_timeline(
             remaining -= 1
             drop_pending = False
         i += 1
+    if card.has_bridge and not any(s.kind == "b" for s in sections):
+        for j in range(len(sections) - 1, -1, -1):
+            if sections[j].kind == "a":
+                s = sections[j]
+                sections[j] = Section("b", s.cycles, s.muted, s.transpose)
+                break
     sections.append(Section("outro", 1, _ALL_BUT_KEYS))
     if rng.random() < card.p_transpose_event:
         idx = max((j for j, s in enumerate(sections) if s.kind in ("a", "b")), default=None)

@@ -13,6 +13,7 @@ from lattice.harmony.elaborate import Segment
 from lattice.harmony.grammar import Loop
 from lattice.midi import programs_for_card, write_midi
 from lattice.model import Event, Role, Timeline
+from lattice.section import SectionRender
 from lattice.theory.chord import symbol
 from lattice.theory.key import Key, key_name
 from lattice.theory.pitch import SpelledPitch
@@ -36,13 +37,17 @@ class Beat:
     timeline: Timeline
     pocket: PocketReport
     score: float
+    section_b: SectionRender | None = field(default=None, kw_only=True)
 
     def unrolled(self) -> dict[Role, tuple[Event, ...]]:
         out: dict[Role, list[Event]] = {r: [] for r in Role}
         cycle = 0
         cycle_ticks = self.bars * 3840
         for section in self.timeline.sections:
-            parts = self.parts_b if section.kind == "b" else self.parts_a
+            if self.section_b is not None:
+                parts = self.section_b.parts_a if section.kind == "b" else self.parts_a
+            else:
+                parts = self.parts_b if section.kind == "b" else self.parts_a
             for _ in range(section.cycles):
                 offset = cycle * cycle_ticks
                 for role, events in parts.items():
@@ -67,6 +72,35 @@ class Beat:
                 "micro_ms": round(e.micro_ms, 4), "glide": e.glide,
             }
 
+        def render_dict(
+            loop: Loop,
+            segments: tuple[Segment, ...],
+            voicings: tuple[tuple[SpelledPitch, ...], ...],
+            parts_a: dict[Role, tuple[Event, ...]],
+            parts_b: dict[Role, tuple[Event, ...]],
+        ) -> dict[str, object]:
+            return {
+                "loop": [fc.name for fc in loop.items],
+                "segments": [
+                    {
+                        "symbol": symbol(s.chord),
+                        "label": s.label,
+                        "start": s.start_slot,
+                        "dur": s.dur_slots,
+                    }
+                    for s in segments
+                ],
+                "voicings": [[p.name() for p in v] for v in voicings],
+                "parts_a": {
+                    r.value: [ev(e) for e in es]
+                    for r, es in sorted(parts_a.items(), key=lambda kv: kv[0].value)
+                },
+                "parts_b": {
+                    r.value: [ev(e) for e in es]
+                    for r, es in sorted(parts_b.items(), key=lambda kv: kv[0].value)
+                },
+            }
+
         data = {
             "card": asdict(self.card),
             "key": key_name(self.key),
@@ -76,17 +110,18 @@ class Beat:
             "seed": self.seed,
             "index": self.index,
             "score": round(self.score, 6),
-            "loop": [fc.name for fc in self.loop.items],
-            "segments": [
-                {
-                    "symbol": symbol(s.chord),
-                    "label": s.label,
-                    "start": s.start_slot,
-                    "dur": s.dur_slots,
-                }
-                for s in self.segments
-            ],
-            "voicings": [[p.name() for p in v] for v in self.voicings],
+            **render_dict(self.loop, self.segments, self.voicings, self.parts_a, self.parts_b),
+            "section_b": (
+                render_dict(
+                    self.section_b.loop,
+                    self.section_b.segments,
+                    self.section_b.voicings,
+                    self.section_b.parts_a,
+                    self.section_b.parts_b,
+                )
+                if self.section_b is not None
+                else None
+            ),
             "pocket": {
                 "swing": round(self.pocket.swing, 4),
                 "snap_ms": round(self.pocket.snap_ms, 2),
@@ -99,8 +134,6 @@ class Beat:
                 }
                 for s in self.timeline.sections
             ],
-            "parts_a": {r.value: [ev(e) for e in es] for r, es in self.parts_a.items()},
-            "parts_b": {r.value: [ev(e) for e in es] for r, es in self.parts_b.items()},
         }
         return json.dumps(data, sort_keys=True)
 

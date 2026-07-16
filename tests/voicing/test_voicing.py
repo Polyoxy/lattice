@@ -85,3 +85,33 @@ def test_molina_m7_gets_add9_color() -> None:
     cm7 = build(parse_tpc("C"), "m7")
     stacks = stack_candidates(cm7, MOLINA, bass_covers_root=True)
     assert any(len(s) == 4 and any(p.midi % 12 == 2 for p in s) for s in stacks)
+
+
+def test_seed_from_biases_opening_voicing_toward_seam() -> None:
+    from lattice.harmony.elaborate import Segment
+    from lattice.theory.chord import build
+    from lattice.theory.pitch import SpelledPitch, parse_tpc
+    from lattice.voicing.realize import realize
+
+    segs = (Segment(build(parse_tpc("G"), "m7"), "iv7", 0, 16),)
+    seed_high = (SpelledPitch(parse_tpc("D"), 5),)
+    seed_low = (SpelledPitch(parse_tpc("D"), 3),)
+    from lattice.cards import MOLINA
+
+    top_high = max(realize(segs, MOLINA, seed_from=seed_high)[0], key=lambda p: p.midi).midi
+    top_low = max(realize(segs, MOLINA, seed_from=seed_low)[0], key=lambda p: p.midi).midi
+    assert top_high >= top_low
+
+
+def test_seed_from_none_matches_default() -> None:
+    from lattice.harmony.elaborate import Segment
+    from lattice.theory.chord import build
+    from lattice.theory.pitch import parse_tpc
+    from lattice.voicing.realize import realize
+    from lattice.cards import FAIYAZ
+
+    segs = (
+        Segment(build(parse_tpc("A"), "m9"), "i9", 0, 16),
+        Segment(build(parse_tpc("F"), "maj7"), "bVImaj7", 16, 16),
+    )
+    assert realize(segs, FAIYAZ) == realize(segs, FAIYAZ, seed_from=None)

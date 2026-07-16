@@ -6,7 +6,7 @@ from typing import Final
 
 from lattice.cards import StyleCard
 from lattice.harmony.grammar import Loop
-from lattice.theory.chord import Chord
+from lattice.theory.chord import Chord, is_dominant
 from lattice.theory.key import Key
 from lattice.theory.pitch import pitch_class
 
@@ -109,6 +109,17 @@ def _root_motion_signature(loop: Loop) -> tuple[int, ...]:
     return tuple(
         pitch_class(roots[(i + 1) % len(roots)] - roots[i]) for i in range(len(roots))
     )
+
+
+def contrast(a: Loop, b: Loop) -> float:
+    score = 0.0
+    if _root_motion_signature(a) != _root_motion_signature(b):
+        score += 2.0
+    if is_dominant(b.items[-1].chord):
+        score += 1.5
+    if len(a.items) != len(b.items):
+        score += 0.5
+    return score
 
 
 def rank(loops: list[Loop], card: StyleCard, n: int) -> list[Loop]:

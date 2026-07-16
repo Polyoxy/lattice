@@ -11,8 +11,9 @@ from lattice.groove.keys import keys_events
 from lattice.groove.pocket import apply_pocket
 from lattice.harmony.elaborate import elaborate
 from lattice.harmony.grammar import Loop, candidate_loops
-from lattice.harmony.score import loop_score, rank
+from lattice.harmony.score import contrast, loop_score, rank
 from lattice.model import Role
+from lattice.section import SectionRender
 from lattice.theory.key import Key, key_name, parse_key
 from lattice.voicing.realize import realize
 
@@ -74,12 +75,44 @@ def make_beat(
         }
         parts_a, report = apply_pocket({**drums["A"], **shared}, card, b, _rng(seed, i, 1))
         parts_b, _ = apply_pocket({**drums["B"], **shared}, card, b, _rng(seed, i, 1))
+        section_b = None
+        if card.has_bridge:
+            bridge_card = card.override(
+                function_pool=card.bridge_function_pool,
+                major_function_pool=card.bridge_major_function_pool,
+                loop_len_weights=card.bridge_len_weights,
+            )
+            bl = [ln for ln, _ in card.bridge_len_weights]
+            bw = [w for _, w in card.bridge_len_weights]
+            b_length = int(rng.choice(np.array(bl), p=np.array(bw) / sum(bw)))
+            bridge_pool = [
+                lp for lp in candidate_loops(bridge_card, k, bars) if len(lp.items) == b_length
+            ]
+            if not bridge_pool:
+                raise ValueError(f"no bridge loops of length {b_length} for {key_name(k)}")
+            b_loop = max(
+                bridge_pool, key=lambda lp: loop_score(lp, bridge_card) + contrast(loop, lp)
+            )
+            b_segments = elaborate(b_loop, bridge_card, rng)
+            seed_from = voicings[-1] if voicings else None
+            b_voicings = realize(b_segments, card, seed_from=seed_from)
+            b_drums = drums_gen(bridge_card, bars, rng)
+            if rng.random() < card.p_drumless:
+                b_drums = {v: {r: () for r in variant} for v, variant in b_drums.items()}
+            b_shared = {
+                **bass_parts(b_segments, card, rng),
+                Role.KEYS: keys_events(b_segments, b_voicings, bars, card, rng),
+            }
+            b_parts_a, _ = apply_pocket({**b_drums["A"], **b_shared}, card, b, _rng(seed, i, 2))
+            b_parts_b, _ = apply_pocket({**b_drums["B"], **b_shared}, card, b, _rng(seed, i, 2))
+            section_b = SectionRender(b_loop, b_segments, b_voicings, b_parts_a, b_parts_b)
         timeline = build_timeline(card, bars, b, rng)
         beats.append(
             Beat(
                 card=card, key=k, bpm=b, bars=bars, seed=seed, index=i, loop=loop,
                 segments=segments, voicings=voicings, parts_a=parts_a, parts_b=parts_b,
                 timeline=timeline, pocket=report, score=loop_score(loop, card),
+                section_b=section_b,
             )
         )
     return beats

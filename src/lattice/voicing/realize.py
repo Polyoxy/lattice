@@ -20,17 +20,23 @@ def movement(a: Stack, b: Stack) -> float:
 
 
 def realize(
-    segments: tuple[Segment, ...], card: StyleCard, bass_covers_root: bool = True
+    segments: tuple[Segment, ...],
+    card: StyleCard,
+    bass_covers_root: bool = True,
+    seed_from: tuple[SpelledPitch, ...] | None = None,
 ) -> tuple[Stack, ...]:
     cands = [stack_candidates(s.chord, card, bass_covers_root) for s in segments]
     for s, c in zip(segments, cands, strict=True):
         if not c:
             raise ValueError(f"no valid voicing for {symbol(s.chord)}")
+    first_stage = cands[0]
+    if seed_from:
+        first_stage = sorted(first_stage, key=lambda st: movement(seed_from, st))
     if len(segments) == 1:
-        return (cands[0][0],)
+        return (first_stage[0],)
     best_cost = float("inf")
     best_path: list[Stack] = []
-    for first in cands[0][:8]:
+    for first in first_stage[:8]:
         current: list[tuple[float, list[Stack]]] = [(sparseness(len(first), card), [first])]
         for stage in cands[1:]:
             nxt: list[tuple[float, list[Stack]]] = []

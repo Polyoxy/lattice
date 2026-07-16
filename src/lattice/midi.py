@@ -19,6 +19,7 @@ _CHANNEL: Final[dict[Role, int]] = {
 _PROGRAM: Final[dict[Role, int]] = {Role.KEYS: 4, Role.BASS: 33, Role.SUB: 38}
 _CARD_PROGRAMS: Final[dict[str, dict[Role, int]]] = {
     "molina": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32},
+    "tunisia": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32},
 }
 
 

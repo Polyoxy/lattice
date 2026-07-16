@@ -48,6 +48,10 @@ class StyleCard:
     transpose_semitones: int
     texture: tuple[tuple[str, float], ...]
     provenance: tuple[tuple[str, str], ...]
+    has_bridge: bool = False
+    bridge_function_pool: tuple[str, ...] = ()
+    bridge_major_function_pool: tuple[str, ...] = ()
+    bridge_len_weights: tuple[tuple[int, float], ...] = ()
 
     def override(self, **kwargs: Any) -> StyleCard:
         return replace(self, **kwargs)
@@ -237,7 +241,68 @@ MOLINA: Final = StyleCard(
     ),
 )
 
-_CARDS: Final = {c.name: c for c in (FAIYAZ, CONDUCTOR, MOLINA)}
+TUNISIA: Final = StyleCard(
+    name="tunisia",
+    centers=("Dm", "Am", "Em", "Gm", "Cm"),
+    p_major_center=0.15,
+    major_centers=("F", "C", "Bb", "Eb"),
+    loop_len_weights=((2, 0.7), (3, 0.2), (4, 0.1)),
+    function_pool=(
+        "i7", "i9", "i6add9", "bII", "iv7", "V7b9",
+    ),
+    major_function_pool=("Imaj7", "ii9", "IVmaj7", "V7maj", "vi7"),
+    p_kicker=0.4,
+    p_phrygian_vamp=0.6,
+    p_tonic_avoid=0.1,
+    allow_tritone_sub=True,
+    allow_chromatic_mediant=False,
+    elaboration_density=0.4,
+    max_changes_per_bar=3,
+    register_lo=43,
+    register_hi=79,
+    rootless=True,
+    voicing_density=0.7,
+    templates=(
+        "close4", "close5", "drop2", "quartal", "us_triad", "sus43", "add9",
+    ),
+    bpm_range=(128, 152),
+    swing_band=(0.58, 0.66),
+    snap_rush_ms=(0.0, 0.0),
+    clap_drag_ms=(0.0, 0.0),
+    kick_per_bar=(1, 2),
+    hat_vels=(45, 75),
+    p_hat_roll=0.05,
+    p_perc_bed=0.7,
+    p_turnaround=0.6,
+    p_drumless=0.1,
+    ghost_kicks=False,
+    timing_sigma_ms=5.0,
+    vel_jitter=0.1,
+    p_bass_approach=0.6,
+    p_bass_stab=0.2,
+    p_bass_glide=0.05,
+    p_keys_anticipation=0.25,
+    keys_reattack="sustain",
+    target_len_s=(90, 150),
+    p_transpose_event=0.1,
+    transpose_semitones=3,
+    texture=(
+        ("lpf_hz", 17000.0), ("crackle_db", -55.0), ("wow_depth", 0.05),
+        ("pump_db", 1.5), ("reverb_s", 1.6), ("tape_drive", 0.25),
+    ),
+    provenance=(
+        ("all", "designed"), ("p_phrygian_vamp", "reserved-phase-2"),
+        ("function_pool", "designed"), ("bridge_function_pool", "designed"),
+    ),
+    has_bridge=True,
+    bridge_function_pool=(
+        "iim7b5", "V7b9", "i7", "iv7", "bVII7", "V7b13", "ii7", "v7",
+    ),
+    bridge_major_function_pool=("ii9", "V7maj", "Imaj7", "IVmaj7", "vi7"),
+    bridge_len_weights=((3, 0.5), (4, 0.5)),
+)
+
+_CARDS: Final = {c.name: c for c in (FAIYAZ, CONDUCTOR, MOLINA, TUNISIA)}
 
 
 def get_card(name: str) -> StyleCard:

@@ -45,3 +45,10 @@ def test_provenance_flags_swing_as_inferred() -> None:
 def test_override_returns_new_card() -> None:
     c2 = FAIYAZ.override(p_drumless=0.5)
     assert c2.p_drumless == 0.5 and FAIYAZ.p_drumless != 0.5 and c2.name == FAIYAZ.name
+
+
+def test_bridge_fields_default_empty() -> None:
+    from lattice.cards import FAIYAZ
+
+    assert FAIYAZ.has_bridge is False
+    assert FAIYAZ.bridge_len_weights == ()

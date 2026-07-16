@@ -17,7 +17,12 @@ def explain_beat(beat: Beat) -> str:
         f"{beat.bars}-bar loop · seed {beat.seed}"
     )
     loop_bits = [f"{symbol(fc.chord)} ({fc.roman})" for fc in beat.loop.items]
-    lines.append("loop: " + " → ".join(loop_bits))
+    if beat.section_b is not None:
+        b_loop_bits = [f"{symbol(fc.chord)} ({fc.roman})" for fc in beat.section_b.loop.items]
+        lines.append("loop A: " + " → ".join(loop_bits))
+        lines.append("loop B: " + " → ".join(b_loop_bits))
+    else:
+        lines.append("loop: " + " → ".join(loop_bits))
 
     loop_romans = {fc.roman for fc in beat.loop.items}
     inserted = [s for s in beat.segments if s.label not in loop_romans]
