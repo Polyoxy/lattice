@@ -1,0 +1,39 @@
+import numpy as np
+
+from lattice.arrange import build_timeline
+from lattice.cards import FAIYAZ
+from lattice.model import Role, bar_s
+
+
+def test_duration_lands_in_card_band() -> None:
+    for seed in range(20):
+        t = build_timeline(FAIYAZ, bars=4, bpm=72, rng=np.random.default_rng(seed))
+        seconds = t.total_cycles * 4 * bar_s(72)
+        assert 80 <= seconds <= 165
+
+
+def test_bookends_are_keys_only() -> None:
+    t = build_timeline(FAIYAZ, bars=4, bpm=72, rng=np.random.default_rng(0))
+    first, last = t.sections[0], t.sections[-1]
+    assert first.kind == "intro" and last.kind == "outro"
+    for s in (first, last):
+        assert Role.KEYS not in s.muted
+        assert Role.KICK in s.muted and Role.SUB in s.muted
+
+
+def test_transpose_event_lands_on_final_content_section() -> None:
+    card = FAIYAZ.override(p_transpose_event=1.0)
+    for seed in range(30):
+        t = build_timeline(card, bars=4, bpm=72, rng=np.random.default_rng(seed))
+        stamped = [s for s in t.sections if s.transpose]
+        assert len(stamped) == 1
+        assert stamped[0].kind in ("a", "b")
+        content_idx = max(i for i, s in enumerate(t.sections) if s.kind in ("a", "b"))
+        assert t.sections[content_idx].transpose == card.transpose_semitones
+
+
+def test_all_sections_at_least_one_cycle_and_kinds_valid() -> None:
+    for seed in range(10):
+        t = build_timeline(FAIYAZ, bars=4, bpm=90, rng=np.random.default_rng(seed))
+        assert all(s.cycles >= 1 for s in t.sections)
+        assert {s.kind for s in t.sections} <= {"intro", "a", "b", "drop", "outro"}

@@ -1,0 +1,239 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, replace
+from typing import Any, Final
+
+
+@dataclass(frozen=True, slots=True)
+class StyleCard:
+    name: str
+    centers: tuple[str, ...]
+    p_major_center: float
+    major_centers: tuple[str, ...]
+    loop_len_weights: tuple[tuple[int, float], ...]
+    function_pool: tuple[str, ...]
+    major_function_pool: tuple[str, ...]
+    p_kicker: float
+    p_phrygian_vamp: float
+    p_tonic_avoid: float
+    allow_tritone_sub: bool
+    allow_chromatic_mediant: bool
+    elaboration_density: float
+    max_changes_per_bar: int
+    register_lo: int
+    register_hi: int
+    rootless: bool
+    templates: tuple[str, ...]
+    bpm_range: tuple[int, int]
+    swing_band: tuple[float, float]
+    snap_rush_ms: tuple[float, float]
+    clap_drag_ms: tuple[float, float]
+    kick_per_bar: tuple[int, int]
+    hat_vels: tuple[int, int]
+    p_hat_roll: float
+    p_perc_bed: float
+    p_turnaround: float
+    p_drumless: float
+    ghost_kicks: bool
+    timing_sigma_ms: float
+    vel_jitter: float
+    p_bass_approach: float
+    p_bass_stab: float
+    p_bass_glide: float
+    p_keys_anticipation: float
+    keys_reattack: str
+    target_len_s: tuple[int, int]
+    p_transpose_event: float
+    transpose_semitones: int
+    texture: tuple[tuple[str, float], ...]
+    provenance: tuple[tuple[str, str], ...]
+
+    def override(self, **kwargs: Any) -> StyleCard:
+        return replace(self, **kwargs)
+
+
+FAIYAZ: Final = StyleCard(
+    name="faiyaz",
+    centers=("Am", "Bm", "C#m", "Dm", "Fm", "Gm", "G#m"),
+    p_major_center=0.2,
+    major_centers=("C", "D", "E", "Ab"),
+    loop_len_weights=((1, 0.05), (2, 0.35), (3, 0.25), (4, 0.35)),
+    function_pool=(
+        "i7", "i9", "i6add9", "iv7", "iv9", "iv6add9", "v7", "V7", "V7b9",
+        "V7b13", "bVImaj7", "bIII", "bVII9", "ii7", "bII", "IV7",
+    ),
+    major_function_pool=(
+        "Imaj7", "ii9", "ii7maj", "iii7", "IVmaj7", "V7maj", "vi7",
+        "vii_m7",
+    ),
+    p_kicker=0.25,
+    p_phrygian_vamp=0.15,
+    p_tonic_avoid=0.15,
+    allow_tritone_sub=False,
+    allow_chromatic_mediant=False,
+    elaboration_density=0.1,
+    max_changes_per_bar=2,
+    register_lo=48,
+    register_hi=72,
+    rootless=True,
+    templates=("close4", "close5"),
+    bpm_range=(65, 95),
+    swing_band=(0.54, 0.62),
+    snap_rush_ms=(-20.0, -10.0),
+    clap_drag_ms=(10.0, 20.0),
+    kick_per_bar=(1, 3),
+    hat_vels=(64, 96),
+    p_hat_roll=0.15,
+    p_perc_bed=0.7,
+    p_turnaround=0.8,
+    p_drumless=0.05,
+    ghost_kicks=False,
+    timing_sigma_ms=4.0,
+    vel_jitter=0.08,
+    p_bass_approach=0.5,
+    p_bass_stab=0.35,
+    p_bass_glide=0.15,
+    p_keys_anticipation=0.3,
+    keys_reattack="sustain",
+    target_len_s=(90, 150),
+    p_transpose_event=0.2,
+    transpose_semitones=3,
+    texture=(
+        ("lpf_hz", 15500.0), ("crackle_db", -38.0), ("wow_depth", 0.15),
+        ("pump_db", 4.5), ("reverb_s", 2.5), ("tape_drive", 0.3),
+    ),
+    provenance=(
+        ("bpm_range", "cited"), ("snap_rush_ms", "cited"),
+        ("clap_drag_ms", "cited"), ("swing_band", "inferred"),
+        ("kick_per_bar", "cited"), ("function_pool", "cited"),
+        ("p_kicker", "gate-only-phase-1"), ("p_phrygian_vamp", "reserved-phase-2"),
+        ("p_tonic_avoid", "inferred"), ("allow_tritone_sub", "cited-absence"),
+        ("allow_chromatic_mediant", "cited-absence"), ("register", "cited"),
+        ("texture", "cited"), ("target_len_s", "cited"),
+        ("vel_jitter", "cited"), ("timing_sigma_ms", "inferred"),
+    ),
+)
+
+CONDUCTOR: Final = StyleCard(
+    name="conductor",
+    centers=("Am", "Cm", "Dm", "Em", "Fm", "Gm"),
+    p_major_center=0.3,
+    major_centers=("C", "F", "Bb", "Eb", "Ab"),
+    loop_len_weights=((2, 0.4), (3, 0.3), (4, 0.3)),
+    function_pool=(
+        "i7", "i9", "iv7", "iv9", "v7", "V7", "bVImaj7", "bIII", "bVII7",
+        "bVII9",
+    ),
+    major_function_pool=(
+        "Imaj7", "ii7maj", "iii7", "IVmaj7", "V7maj", "vi7", "ii9",
+    ),
+    p_kicker=0.15,
+    p_phrygian_vamp=0.0,
+    p_tonic_avoid=0.1,
+    allow_tritone_sub=False,
+    allow_chromatic_mediant=False,
+    elaboration_density=0.05,
+    max_changes_per_bar=1,
+    register_lo=48,
+    register_hi=76,
+    rootless=False,
+    templates=("close4", "close5", "spread"),
+    bpm_range=(80, 100),
+    swing_band=(0.5, 0.5),
+    snap_rush_ms=(0.0, 0.0),
+    clap_drag_ms=(0.0, 0.0),
+    kick_per_bar=(1, 2),
+    hat_vels=(50, 80),
+    p_hat_roll=0.0,
+    p_perc_bed=0.2,
+    p_turnaround=0.3,
+    p_drumless=0.15,
+    ghost_kicks=True,
+    timing_sigma_ms=6.0,
+    vel_jitter=0.1,
+    p_bass_approach=0.2,
+    p_bass_stab=0.1,
+    p_bass_glide=0.0,
+    p_keys_anticipation=0.15,
+    keys_reattack="chop",
+    target_len_s=(90, 150),
+    p_transpose_event=0.15,
+    transpose_semitones=1,
+    texture=(
+        ("lpf_hz", 9000.0), ("crackle_db", -30.0), ("wow_depth", 0.5),
+        ("pump_db", 6.0), ("reverb_s", 1.2), ("tape_drive", 0.6),
+    ),
+    provenance=(
+        ("bpm_range", "cited"), ("p_drumless", "cited"),
+        ("ghost_kicks", "cited"), ("swing_band", "cited-absence"),
+        ("kick_per_bar", "cited"), ("texture", "cited"),
+        ("timing_sigma_ms", "inferred"), ("function_pool", "inferred"),
+        ("keys_reattack", "cited"), ("transpose_semitones", "cited"),
+        ("p_kicker", "gate-only-phase-1"), ("p_phrygian_vamp", "reserved-phase-2"),
+    ),
+)
+
+MOLINA: Final = StyleCard(
+    name="molina",
+    centers=("Cm", "Fm", "Gm", "Am", "Ebm"),
+    p_major_center=0.5,
+    major_centers=("C", "F", "G", "Db", "Ab", "Eb"),
+    loop_len_weights=((2, 0.2), (3, 0.3), (4, 0.5)),
+    function_pool=(
+        "i7", "i9", "iv7", "iv9", "v7", "V7", "V7b9", "V7b13", "bVImaj7",
+        "bIII", "bVII7", "ii7", "iim7b5", "bII",
+    ),
+    major_function_pool=(
+        "Imaj7", "ii9", "ii7maj", "iii7", "IVmaj7", "V7maj", "vi7",
+    ),
+    p_kicker=0.6,
+    p_phrygian_vamp=0.05,
+    p_tonic_avoid=0.05,
+    allow_tritone_sub=True,
+    allow_chromatic_mediant=True,
+    elaboration_density=0.6,
+    max_changes_per_bar=4,
+    register_lo=43,
+    register_hi=79,
+    rootless=True,
+    templates=(
+        "close4", "close5", "drop2", "quartal", "us_triad", "sus43",
+    ),
+    bpm_range=(60, 110),
+    swing_band=(0.55, 0.66),
+    snap_rush_ms=(0.0, 0.0),
+    clap_drag_ms=(0.0, 0.0),
+    kick_per_bar=(1, 2),
+    hat_vels=(40, 70),
+    p_hat_roll=0.05,
+    p_perc_bed=0.1,
+    p_turnaround=0.5,
+    p_drumless=0.3,
+    ghost_kicks=False,
+    timing_sigma_ms=5.0,
+    vel_jitter=0.1,
+    p_bass_approach=0.6,
+    p_bass_stab=0.1,
+    p_bass_glide=0.0,
+    p_keys_anticipation=0.2,
+    keys_reattack="sustain",
+    target_len_s=(90, 150),
+    p_transpose_event=0.1,
+    transpose_semitones=3,
+    texture=(
+        ("lpf_hz", 18000.0), ("crackle_db", -60.0), ("wow_depth", 0.0),
+        ("pump_db", 1.0), ("reverb_s", 1.8), ("tape_drive", 0.15),
+    ),
+    provenance=(
+        ("function_pool", "cited"), ("elaboration_density", "cited"),
+        ("allow_tritone_sub", "cited"), ("bpm_range", "inferred"),
+        ("templates", "cited"), ("p_kicker", "gate-only-phase-1"),
+        ("p_phrygian_vamp", "reserved-phase-2"),
+    ),
+)
+
+_CARDS: Final = {c.name: c for c in (FAIYAZ, CONDUCTOR, MOLINA)}
+
+
+def get_card(name: str) -> StyleCard:
+    return _CARDS[name]
