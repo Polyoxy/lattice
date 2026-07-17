@@ -52,6 +52,12 @@ class StyleCard:
     bridge_function_pool: tuple[str, ...] = ()
     bridge_major_function_pool: tuple[str, ...] = ()
     bridge_len_weights: tuple[tuple[int, float], ...] = ()
+    section_pattern: str = "AB"
+    keys_pattern: str = "comp"
+    bass_feel: str = "riff"
+    bridge_bass_feel: str = ""
+    pad_enters_section: int = 0
+    has_strings: bool = False
 
     def override(self, **kwargs: Any) -> StyleCard:
         return replace(self, **kwargs)
@@ -302,7 +308,85 @@ TUNISIA: Final = StyleCard(
     bridge_len_weights=((3, 0.5), (4, 0.5)),
 )
 
-_CARDS: Final = {c.name: c for c in (FAIYAZ, CONDUCTOR, MOLINA, TUNISIA)}
+BALLROOM: Final = StyleCard(
+    name="ballroom",
+    centers=("Dm",),
+    p_major_center=1.0,
+    major_centers=("F", "Ab", "Eb", "C"),
+    loop_len_weights=((2, 0.35), (4, 0.65)),
+    function_pool=("i7", "iv7", "V7"),
+    major_function_pool=(
+        "I6", "I6add9", "ii7maj", "iii7", "IV6", "iv6", "V7maj", "VI7",
+        "vi7", "#idim7", "II7",
+    ),
+    p_kicker=0.0,
+    p_phrygian_vamp=0.0,
+    p_tonic_avoid=0.05,
+    allow_tritone_sub=False,
+    allow_chromatic_mediant=True,
+    elaboration_density=0.15,
+    max_changes_per_bar=2,
+    register_lo=48,
+    register_hi=76,
+    rootless=False,
+    voicing_density=0.5,
+    templates=(
+        "close4", "close5", "drop2", "quartal", "us_triad", "sus43", "add9",
+    ),
+    bpm_range=(104, 126),
+    swing_band=(0.58, 0.68),
+    snap_rush_ms=(6.0, 14.0),
+    clap_drag_ms=(0.0, 0.0),
+    kick_per_bar=(1, 1),
+    hat_vels=(38, 52),
+    p_hat_roll=0.0,
+    p_perc_bed=0.0,
+    p_turnaround=0.0,
+    p_drumless=0.0,
+    ghost_kicks=False,
+    timing_sigma_ms=3.5,
+    vel_jitter=0.05,
+    p_bass_approach=0.0,
+    p_bass_stab=0.0,
+    p_bass_glide=0.0,
+    p_keys_anticipation=0.12,
+    keys_reattack="sustain",
+    target_len_s=(150, 210),
+    p_transpose_event=0.0,
+    transpose_semitones=0,
+    texture=(
+        ("lpf_hz", 14000.0), ("room_size", 0.85), ("verb_mix", 0.24),
+        ("glue_db", 3.0),
+    ),
+    provenance=(
+        ("bpm_range", "cited: ISTD slow foxtrot 112-120 inside band; ballroom-dna 7"),
+        (
+            "swing_band",
+            "designed: dance-band charts straighter than combo 0.70-0.76; ballroom-dna 1",
+        ),
+        (
+            "snap_rush_ms",
+            "designed: brush drag behind the beat; ballroom-dna 2 contested direction",
+        ),
+        ("major_function_pool", "cited: added-sixth tonic, Martin 2023; ballroom-dna 6"),
+        ("section_pattern", "cited: 32-bar AABA dominance; ballroom-dna 6"),
+        ("texture", "designed: warm ceiling, big room, no lo-fi"),
+    ),
+    has_bridge=True,
+    bridge_function_pool=("i7", "iv7", "V7"),
+    bridge_major_function_pool=(
+        "III7", "VI7", "II7", "V7maj", "V9", "iii7", "vi7", "ii7maj",
+    ),
+    bridge_len_weights=((2, 0.5), (4, 0.5)),
+    section_pattern="AABA",
+    keys_pattern="stride",
+    bass_feel="two",
+    bridge_bass_feel="walk",
+    pad_enters_section=2,
+    has_strings=True,
+)
+
+_CARDS: Final = {c.name: c for c in (FAIYAZ, CONDUCTOR, MOLINA, TUNISIA, BALLROOM)}
 
 
 def get_card(name: str) -> StyleCard:

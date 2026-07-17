@@ -41,12 +41,12 @@ def band_energy(mono: np.ndarray, rate: int, lo: float, hi: float) -> float:
     return float(spectrum[mask].mean())
 
 
-def _render(style: str, seed: int, tmp: Path):  # type: ignore[no-untyped-def]
+def _render(style: str, seed: int, tmp: Path, key: str = "Am", bpm: int = 88):  # type: ignore[no-untyped-def]
     try:
         load_kit()
     except FileNotFoundError:
         pytest.skip("kit not fetched")
-    beat = make_beat(style=style, key="Am", bpm=88, bars=2, n=1, seed=seed)[0]
+    beat = make_beat(style=style, key=key, bpm=bpm, bars=2, n=1, seed=seed)[0]
     return render_beat(beat, tmp)
 
 
@@ -119,3 +119,47 @@ def test_tunisia_renders_bridge_form_end_to_end(tmp_path: Path) -> None:
     assert 0.3 < float(np.abs(k_data).max()) < 0.9
     m_data, _ = _read(result.mix)
     assert float(np.abs(m_data).max()) > 0.1
+
+
+# Ballroom is major-only (p_major_center=1.0, major_centers=("F","Ab","Eb","C"));
+# key="Am" is a configuration production never generates, so these gates now render
+# at key="F", bpm=112 — inside the card's cited bpm_range and its actual major-mode
+# register. Measured on _render("ballroom", 5, tmp_path, key="F", bpm=112): master
+# high(16-21k)/mid(1-5k) ratio 0.002924, mix lowmid(250-4k)/sub(40-250) ratio 0.149329,
+# stem peaks keys 0.517670, bass 0.256409, pad 0.210327 (pad reads higher than the old
+# Am/88 fixture's 0.15472 — expected, strings voice differently over a major triad).
+# Lower stem bounds set for >=2x margin (measured/threshold): keys 0.25 (2.07x), bass
+# 0.12 (2.14x), pad 0.10 (2.10x, tightened up from the Am-era 0.075 now that the true
+# major-mode pad level is known). Upper stem bounds (0.9/0.9/0.85) are a clipping
+# sanity ceiling, not a margin computation — peaks are physically bounded near 1.0, so
+# no threshold below it can carry 2x margin once a measured peak passes 0.5; kept as
+# first drafted since they're already well clear of the measured values. Both ratio
+# thresholds carry >2x margin already (17.1x, 2.99x) so are kept as first drafted.
+def test_ballroom_master_is_warm_not_dark(tmp_path: Path) -> None:
+    result = _render("ballroom", 5, tmp_path, key="F", bpm=112)
+    data, rate = _read(result.master)
+    mono = data.mean(axis=1)
+    high = band_energy(mono, rate, 16000, 21000)
+    mid = band_energy(mono, rate, 1000, 5000)
+    assert high < mid * 0.05
+
+
+def test_ballroom_cross_engine_levels(tmp_path: Path) -> None:
+    result = _render("ballroom", 5, tmp_path, key="F", bpm=112)
+    peaks = {}
+    for role in (Role.KEYS, Role.BASS, Role.PAD):
+        data, _ = _read(result.stems[role])
+        peaks[role] = float(np.abs(data).max())
+    assert 0.25 <= peaks[Role.KEYS] <= 0.9
+    assert 0.12 <= peaks[Role.BASS] <= 0.9
+    assert 0.10 <= peaks[Role.PAD] <= 0.85
+    m_data, m_rate = _read(result.master)
+    mono = m_data.mean(axis=1)
+    ratio = band_energy(mono, m_rate, 250, 4000) / band_energy(mono, m_rate, 40, 250)
+    assert ratio > 0.05
+
+
+def test_ballroom_render_deterministic(tmp_path: Path) -> None:
+    a = _render("ballroom", 5, tmp_path / "a", key="F", bpm=112)
+    b = _render("ballroom", 5, tmp_path / "b", key="F", bpm=112)
+    assert a.master.read_bytes() == b.master.read_bytes()

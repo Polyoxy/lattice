@@ -7,8 +7,12 @@ from lattice.render.kits import KIT_KEYWORDS, load_kit
 
 
 def test_every_drumsound_has_keywords() -> None:
+    synthesized_only = {
+        DrumSound.BRUSH_TAP, DrumSound.BRUSH_SWIRL, DrumSound.FEATHER, DrumSound.CHICK,
+    }
     assert set(KIT_KEYWORDS) == set(DrumSound)
-    assert all(KIT_KEYWORDS[s] for s in DrumSound)
+    assert all(KIT_KEYWORDS[s] for s in DrumSound if s not in synthesized_only)
+    assert all(KIT_KEYWORDS[s] == () for s in synthesized_only)
 
 
 def test_load_kit_reads_a_complete_directory(tmp_path: Path) -> None:

@@ -6,9 +6,10 @@ from pathlib import Path
 import pytest
 
 from lattice import make_beat
+from lattice.model import Role
 from lattice.render.engine import render_beat
 from lattice.render.kits import load_kit
-from lattice.render.stems import render_keys_fluidsynth
+from lattice.render.stems import render_fluid_stem
 
 pytestmark = pytest.mark.slow
 
@@ -44,6 +45,6 @@ def test_fluidsynth_keys_deterministic(tmp_path: Path) -> None:
     if shutil.which("fluidsynth") is None:
         pytest.skip("no fluidsynth")
     beat = make_beat(style="molina", key="Cm", bpm=84, bars=2, n=1, seed=7)[0]
-    a = render_keys_fluidsynth(beat, tmp_path / "a.wav")
-    b = render_keys_fluidsynth(beat, tmp_path / "b.wav")
+    a = render_fluid_stem(beat, Role.KEYS, tmp_path / "a.wav")
+    b = render_fluid_stem(beat, Role.KEYS, tmp_path / "b.wav")
     assert _sha(a) == _sha(b)

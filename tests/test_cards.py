@@ -52,3 +52,21 @@ def test_bridge_fields_default_empty() -> None:
 
     assert FAIYAZ.has_bridge is False
     assert FAIYAZ.bridge_len_weights == ()
+
+
+def test_ballroom_card_registered() -> None:
+    card = get_card("ballroom")
+    assert card.name == "ballroom"
+    assert card.p_major_center == 1.0
+    assert card.has_bridge and card.section_pattern == "AABA"
+    assert card.bass_feel == "two" and card.bridge_bass_feel == "walk"
+    assert card.keys_pattern == "stride" and card.has_strings
+    assert card.bpm_range == (104, 126)
+
+
+def test_new_card_fields_default_inert() -> None:
+    for name in ("faiyaz", "conductor", "molina", "tunisia"):
+        c = get_card(name)
+        assert c.section_pattern == "AB" and c.keys_pattern == "comp"
+        assert c.bass_feel == "riff" and c.bridge_bass_feel == ""
+        assert c.pad_enters_section == 0 and not c.has_strings

@@ -18,7 +18,8 @@ from lattice.groove.pocket import apply_pocket
 from lattice.harmony.elaborate import elaborate
 from lattice.harmony.functions import build_function
 from lattice.harmony.grammar import Loop
-from lattice.model import Role
+from lattice.midi import write_midi
+from lattice.model import Event, Role
 from lattice.theory.key import parse_key
 from lattice.voicing.realize import realize
 
@@ -140,3 +141,13 @@ def test_json_records_engine_version() -> None:
     b = _beat()
     data = json.loads(b.to_json())
     assert data["engine"] == lattice.__version__
+
+
+def test_write_midi_emits_cc11(tmp_path: Path) -> None:
+    events = {Role.PAD: (Event(0, 1920, 60, pitch=72),)}
+    path = tmp_path / "cc.mid"
+    write_midi(events, 112, str(path), cc11={Role.PAD: ((0, 84), (960, 100), (1920, 116))})
+    mid = mido.MidiFile(str(path))
+    ccs = [m for t in mid.tracks for m in t if m.type == "control_change"]
+    assert [c.value for c in ccs] == [84, 100, 116]
+    assert all(c.control == 11 for c in ccs)

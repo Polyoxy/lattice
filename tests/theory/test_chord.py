@@ -37,3 +37,15 @@ def test_slash_chord_symbol() -> None:
 def test_dim7_spelling() -> None:
     d = build(parse_tpc("C"), "dim7")
     assert [tpc_name(t) for t in chord_tpcs(d)] == ["C", "Eb", "Gb", "Bbb"]
+
+
+def test_major_sixth_chord_spelling() -> None:
+    c = build(-1, "6")
+    assert chord_tpcs(c) == (-1, 3, 0, 2)
+    assert symbol(c) == "F6"
+
+
+def test_minor_sixth_chord_spelling() -> None:
+    c = build(2, "m6")
+    assert chord_tpcs(c) == (2, -1, 3, 5)
+    assert symbol(c) == "Dm6"

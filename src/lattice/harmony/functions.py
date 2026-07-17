@@ -35,6 +35,15 @@ _MAJOR_SPECS: Final[dict[str, tuple[int, str, str]]] = {
     "V7maj": (1, "7", "V7"),
     "vi7": (3, "m7", "vi7"),
     "vii_m7": (5, "m7", "vii(m7)"),
+    "I6": (0, "6", "I6"),
+    "I6add9": (0, "6add9", "I6/9"),
+    "IV6": (-1, "6", "IV6"),
+    "iv6": (-1, "m6", "iv6 (borrowed)"),
+    "V9": (1, "9", "V9"),
+    "II7": (2, "7", "II7 (V/V)"),
+    "III7": (4, "7", "III7 (V/vi)"),
+    "VI7": (3, "7", "VI7 (V/ii)"),
+    "#idim7": (7, "dim7", "#i dim7"),
 }
 
 MINOR_FUNCTIONS: Final = tuple(_MINOR_SPECS)

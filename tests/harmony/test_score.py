@@ -51,7 +51,7 @@ def test_rank_dedupes_root_motion_and_returns_n() -> None:
 def test_idiom_shapes_are_reachable_and_fire() -> None:
     from lattice.harmony.score import IDIOM_SHAPES
 
-    assert len(IDIOM_SHAPES) == 18
+    assert len(IDIOM_SHAPES) == 24
     assert all(canonical_rotation(s) == s for s in IDIOM_SHAPES)
     rs = _loop("Bm", ("iv6add9", "v7", "i7", "bVImaj7"))
     non_idiom = _loop("Bm", ("iv6add9", "v7", "i7", "bIII"))

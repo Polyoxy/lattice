@@ -47,6 +47,7 @@ Quick GM check (fluidsynth + fluid-soundfont-gm; piano voice for molina/tunisia)
 
 - `faiyaz`, `conductor`, `molina` — single-loop, corpus-calibrated to the artists named above.
 - `tunisia` — two-part form (A vamp + B bridge), Latin-jazz harmonic language. Original composition, not a cover — see `docs/specs/2026-07-16-two-part-form-tunisia-design.md`.
+- `ballroom` — 1930s foxtrot: stride grand, walking bass, brushes, strings.
 
 ## Layout
 

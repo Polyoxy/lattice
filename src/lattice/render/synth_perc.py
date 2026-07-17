@@ -64,7 +64,41 @@ def _ride(rng: np.random.Generator) -> np.ndarray:
     return _hp((partials / 6.0 + noise) * env, 3000.0)
 
 
-_GENERATORS = {"shaker": _shaker, "bongo": _bongo, "ride": _ride}
+def _brush_tap(rng: np.random.Generator) -> np.ndarray:
+    n = int(_SR * 0.09)
+    noise = _hp(rng.standard_normal(n), 1500.0)
+    env = np.exp(-np.linspace(0, 11, n))
+    return noise * env
+
+
+def _brush_swirl(rng: np.random.Generator) -> np.ndarray:
+    n = int(_SR * 0.9)
+    t = np.arange(n) / _SR
+    noise = _hp(rng.standard_normal(n), 2500.0)
+    breath = 0.6 + 0.4 * np.sin(2 * np.pi * 1.1 * t)
+    attack = np.minimum(t / 0.18, 1.0)
+    decay = np.exp(-np.maximum(t - 0.55, 0.0) * 9.0)
+    return noise * breath * attack * decay
+
+
+def _feather(rng: np.random.Generator) -> np.ndarray:
+    n = int(_SR * 0.12)
+    t = np.arange(n) / _SR
+    thump = np.sin(2 * np.pi * 55.0 * t) * np.exp(-t * 40.0)
+    return thump + _hp(rng.standard_normal(n), 900.0) * np.exp(-t * 120.0) * 0.08
+
+
+def _chick(rng: np.random.Generator) -> np.ndarray:
+    n = int(_SR * 0.05)
+    noise = _hp(rng.standard_normal(n), 6500.0)
+    return noise * np.exp(-np.linspace(0, 14, n))
+
+
+_GENERATORS = {
+    "shaker": _shaker, "bongo": _bongo, "ride": _ride,
+    "brush_tap": _brush_tap, "brush_swirl": _brush_swirl,
+    "feather": _feather, "chick": _chick,
+}
 
 
 def write_missing(root: Path) -> list[str]:
@@ -79,4 +113,7 @@ def write_missing(root: Path) -> list[str]:
     return written
 
 
-_SEEDS = {"shaker": 101, "bongo": 202, "ride": 303}
+_SEEDS = {
+    "shaker": 101, "bongo": 202, "ride": 303,
+    "brush_tap": 404, "brush_swirl": 505, "feather": 606, "chick": 707,
+}

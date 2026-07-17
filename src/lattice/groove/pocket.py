@@ -36,7 +36,7 @@ def apply_pocket(
             micro = e.micro_ms
             if role in _SWUNG_ROLES and e.tick % 960 == 480:
                 micro += swing_ms
-            if e.drum is DrumSound.SNARE:
+            if e.drum in (DrumSound.SNARE, DrumSound.BRUSH_TAP):
                 micro += snap_ms
             elif e.drum is DrumSound.CLAP:
                 micro += clap_ms

@@ -1,6 +1,8 @@
 from lattice.harmony.functions import build_function, pool_for
-from lattice.theory.chord import symbol
+from lattice.harmony.score import _TONIC_NAMES
+from lattice.theory.chord import chord_tpcs, symbol
 from lattice.theory.key import parse_key
+from lattice.theory.pitch import tpc_name
 
 
 def test_documented_loops_spell_correctly() -> None:
@@ -32,3 +34,30 @@ def test_pool_filters_by_mode() -> None:
     pool = ("i7", "v7", "Imaj7", "ii9")
     assert pool_for(parse_key("Am"), pool) == ("i7", "v7")
     assert pool_for(parse_key("C"), pool) == ("Imaj7", "ii9")
+
+
+def test_ballroom_functions_resolve_in_f_major() -> None:
+    key = parse_key("F")
+    for name, root, quality in [
+        ("I6", -1, "6"),
+        ("I6add9", -1, "6add9"),
+        ("IV6", -2, "6"),
+        ("iv6", -2, "m6"),
+        ("V9", 0, "9"),
+        ("II7", 1, "7"),
+        ("III7", 3, "7"),
+        ("VI7", 2, "7"),
+        ("#idim7", 6, "dim7"),
+    ]:
+        fc = build_function(key, name)
+        assert fc.chord.root == root, name
+        assert symbol(fc.chord).startswith(tpc_name(root)), name
+
+
+def test_sharp_one_diminished_spells_sharp() -> None:
+    fc = build_function(parse_key("C"), "#idim7")
+    assert chord_tpcs(fc.chord) == (7, 4, 1, -2)
+
+
+def test_added_sixth_tonic_scores_as_tonic() -> None:
+    assert "I6" in _TONIC_NAMES and "I6add9" in _TONIC_NAMES

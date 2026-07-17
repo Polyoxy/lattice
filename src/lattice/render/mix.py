@@ -7,7 +7,14 @@ import supriya
 
 from lattice.beat import Beat
 from lattice.model import Role
-from lattice.render.buses import conductor_bus, faiyaz_bus, master_out, molina_bus, stem_player
+from lattice.render.buses import (
+    ballroom_bus,
+    conductor_bus,
+    faiyaz_bus,
+    master_out,
+    molina_bus,
+    stem_player,
+)
 from lattice.render.timing import total_seconds
 
 _CUE_FRAMES: Final = 32768
@@ -40,12 +47,21 @@ _MOLINA_ROWS: Final[dict[Role, tuple[float, float, float]]] = {
     Role.HAT: (-10.0, -0.08, 0.0),
     Role.PERC: (-12.0, 0.1, 0.0),
 }
+_BALLROOM_ROWS: Final[dict[Role, tuple[float, float, float]]] = {
+    Role.KEYS: (-1.5, 0.0, 0.0),
+    Role.BASS: (-5.0, 0.0, 1.0),
+    Role.PAD: (-8.0, 0.0, 0.0),
+    Role.KICK: (-15.0, 0.0, 0.0),
+    Role.SNARE: (-14.0, 0.05, 0.0),
+    Role.HAT: (-16.0, -0.08, 0.0),
+}
 
 MIX_TABLE: Final[dict[str, dict[Role, tuple[float, float, float]]]] = {
     "faiyaz": _FAIYAZ_ROWS,
     "conductor": _CONDUCTOR_ROWS,
     "molina": _MOLINA_ROWS,
     "tunisia": _MOLINA_ROWS,
+    "ballroom": _BALLROOM_ROWS,
 }
 
 
@@ -71,7 +87,8 @@ def render_mix(beat: Beat, stem_paths: dict[Role, Path], out_path: Path) -> Path
     score = supriya.Score(output_bus_channel_count=2)
     with score.at(0):
         score.add_synthdefs(
-            stem_player, faiyaz_bus, conductor_bus, molina_bus, master_out, _passthrough
+            stem_player, faiyaz_bus, conductor_bus, molina_bus, ballroom_bus,
+            master_out, _passthrough,
         )
         keys_bus = score.add_bus_group(calculation_rate="audio", count=2)
         bass_bus = score.add_bus_group(calculation_rate="audio", count=2)
@@ -85,7 +102,7 @@ def render_mix(beat: Beat, stem_paths: dict[Role, Path], out_path: Path) -> Path
                 continue
             gain_db, pan, mono = rows[role]
             gain = 10.0 ** (gain_db / 20.0)
-            if role is Role.KEYS:
+            if role in (Role.KEYS, Role.PAD):
                 target = keys_bus
             elif role in _BASS_ROLES:
                 target = bass_bus
@@ -147,6 +164,17 @@ def render_mix(beat: Beat, stem_paths: dict[Role, Path], out_path: Path) -> Path
                 in_bus=master_bus,
                 out=final_bus,
                 lpf_hz=texture["lpf_hz"],
+            )
+        elif card_name == "ballroom":
+            score.add_synth(
+                ballroom_bus,
+                add_action="add_to_tail",
+                in_bus=master_bus,
+                out=final_bus,
+                lpf_hz=texture["lpf_hz"],
+                room_size=texture["room_size"],
+                verb_mix=texture["verb_mix"],
+                glue_db=texture["glue_db"],
             )
         else:
             score.add_synth(

@@ -42,6 +42,12 @@ _RAW_IDIOM_SHAPES: Final[frozenset[tuple[str, ...]]] = frozenset(
         ("iv7", "i7", "bVImaj7", "V7"),
         ("i7", "ii7", "V7", "bVImaj7"),
         ("i9",),
+        ("I6", "vi7", "ii7maj", "V7maj"),
+        ("I6", "#idim7", "ii7maj", "V7maj"),
+        ("iii7", "VI7", "ii7maj", "V7maj"),
+        ("I6", "iv6"),
+        ("III7", "VI7", "II7", "V7maj"),
+        ("I6", "II7", "ii7maj", "V7maj"),
     }
 )
 
@@ -49,7 +55,7 @@ IDIOM_SHAPES: Final[frozenset[tuple[str, ...]]] = frozenset(
     canonical_rotation(s) for s in _RAW_IDIOM_SHAPES
 )
 
-_TONIC_NAMES: Final = frozenset({"i7", "i9", "i6add9", "Imaj7"})
+_TONIC_NAMES: Final = frozenset({"i7", "i9", "i6add9", "Imaj7", "I6", "I6add9"})
 _SUBDOM_DOM: Final = frozenset({"iv7", "iv9", "iv6add9", "v7", "V7", "V7b9", "V7b13", "bVImaj7"})
 
 

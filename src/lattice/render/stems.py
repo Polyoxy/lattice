@@ -8,7 +8,7 @@ from typing import Final
 import supriya
 
 from lattice.beat import Beat
-from lattice.model import DrumSound, Role
+from lattice.model import DrumSound, Role, ms_per_tick
 from lattice.render.synthdefs import bassgtr, drum, pad, rhodey, subbass
 from lattice.render.timing import to_notes, total_seconds
 
@@ -98,18 +98,53 @@ def render_role_stem(
     return out_path
 
 
-def render_keys_fluidsynth(beat: Beat, out_path: Path) -> Path:
+_FLUID_VOICES: Final[dict[str, dict[Role, str]]] = {
+    "molina": {Role.KEYS: "piano"},
+    "tunisia": {Role.KEYS: "piano"},
+    "ballroom": {Role.KEYS: "piano", Role.BASS: "gm", Role.PAD: "gm"},
+}
+_SWELL_STEPS: Final = 8
+
+
+def fluid_roles(card_name: str) -> dict[Role, str]:
+    return _FLUID_VOICES.get(card_name, {})
+
+
+def _swell_ramps(beat: Beat) -> tuple[tuple[int, int], ...]:
+    # Anchor each ramp to the same humanized note_on tick write_midi computes,
+    # or micro-timed pads sound before their swell-start CC and inherit the
+    # previous chord's full-swell tail.
+    mpt = ms_per_tick(beat.bpm)
+    ramps: list[tuple[int, int]] = []
+    for e in beat.unrolled()[Role.PAD]:
+        start = max(0, e.tick + round(e.micro_ms / mpt))
+        for k in range(_SWELL_STEPS):
+            tick = start + (e.dur * k) // _SWELL_STEPS
+            value = 84 + (32 * k) // (_SWELL_STEPS - 1)
+            ramps.append((tick, value))
+    return tuple(sorted(set(ramps)))
+
+
+def _write_fluid_midi(beat: Beat, role: Role, mid: Path) -> None:
     from lattice.midi import programs_for_card, write_midi
 
-    mid = out_path.with_suffix(".mid")
+    cc: dict[Role, tuple[tuple[int, int], ...]] | None = (
+        {role: _swell_ramps(beat)} if role is Role.PAD else None
+    )
     write_midi(
         beat.unrolled(), beat.bpm, str(mid),
-        programs=programs_for_card(beat.card.name), roles={Role.KEYS},
+        programs=programs_for_card(beat.card.name), roles={role}, cc11=cc,
     )
+
+
+def render_fluid_stem(beat: Beat, role: Role, out_path: Path) -> Path:
+    sf2 = _piano_sf2() if _FLUID_VOICES[beat.card.name][role] == "piano" else _SF2
+    mid = out_path.with_suffix(".mid")
+    _write_fluid_midi(beat, role, mid)
     subprocess.run(
         [
             "fluidsynth", "-ni", "-g", str(_FLUIDSYNTH_GAIN),
-            "-F", str(out_path), "-r", "44100", str(_piano_sf2()), str(mid),
+            "-F", str(out_path), "-r", "44100", str(sf2), str(mid),
         ],
         check=True, capture_output=True,
     )

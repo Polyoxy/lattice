@@ -136,3 +136,35 @@ def conductor_patterns(
         }
 
     return {"A": variant(False), "B": variant(True)}
+
+
+def ballroom_patterns(
+    card: StyleCard, bars: int, rng: np.random.Generator
+) -> dict[str, dict[Role, tuple[Event, ...]]]:
+    def variant(tap_lift: int) -> dict[Role, tuple[Event, ...]]:
+        snare: list[Event] = []
+        kick: list[Event] = []
+        hat: list[Event] = []
+        lo, hi = card.hat_vels
+        for bar in range(bars):
+            base = bar * ticks_per_bar()
+            for t in (960, 2880):
+                vel = int(rng.integers(58, 71)) + tap_lift
+                snare.append(Event(base + t, _HIT, vel, drum=DrumSound.BRUSH_TAP))
+            for t in (0, 1920):
+                vel = int(rng.integers(34, 45))
+                snare.append(Event(base + t, _HIT, vel, drum=DrumSound.BRUSH_SWIRL))
+            for q in range(4):
+                vel = int(rng.integers(28, 39))
+                kick.append(Event(base + q * 960, _HIT, vel, drum=DrumSound.FEATHER))
+            for t in (960, 2880):
+                vel = int(rng.integers(lo, hi + 1))
+                hat.append(Event(base + t, _HIT, vel, drum=DrumSound.CHICK))
+        return {
+            Role.KICK: tuple(kick),
+            Role.SNARE: tuple(sorted(snare, key=lambda e: e.tick)),
+            Role.HAT: tuple(hat),
+            Role.PERC: (),
+        }
+
+    return {"A": variant(0), "B": variant(8)}

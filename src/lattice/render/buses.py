@@ -140,6 +140,31 @@ def molina_bus(
 
 
 @supriya.synthdef()
+def ballroom_bus(
+    in_bus: float = 0.0,
+    out: float = 0.0,
+    lpf_hz: float = 14000.0,
+    room_size: float = 0.85,
+    verb_mix: float = 0.24,
+    glue_db: float = 3.0,
+) -> None:
+    from supriya.ugens import Compander, FreeVerb, In, LPF, Out
+
+    sig = In.ar(bus=in_bus, channel_count=2)
+    glued = Compander.ar(
+        source=sig,
+        control=sig,
+        threshold=0.3,
+        slope_above=_pump_slope(glue_db, 3.0, 1.0 / 1.6),
+        clamp_time=0.008,
+        relax_time=0.25,
+    )
+    filtered = LPF.ar(source=glued, frequency=lpf_hz)
+    verb = FreeVerb.ar(source=filtered, mix=verb_mix, room_size=room_size, damping=0.4)
+    Out.ar(bus=out, source=verb)
+
+
+@supriya.synthdef()
 def stem_player(
     buffer_id: float = 0.0,
     out: float = 0.0,
@@ -177,6 +202,7 @@ def compile_buses() -> dict[str, bytes]:
         "faiyaz_bus": faiyaz_bus,
         "conductor_bus": conductor_bus,
         "molina_bus": molina_bus,
+        "ballroom_bus": ballroom_bus,
         "stem_player": stem_player,
         "master_out": master_out,
     }

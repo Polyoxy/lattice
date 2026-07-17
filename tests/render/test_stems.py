@@ -91,10 +91,10 @@ def test_molina_keys_render_via_fluidsynth(tmp_path: Path) -> None:
     if shutil.which("fluidsynth") is None:
         pytest.skip("no fluidsynth")
     from lattice import make_beat
-    from lattice.render.stems import render_keys_fluidsynth
+    from lattice.render.stems import render_fluid_stem
 
     beat = make_beat(style="molina", key="Cm", bpm=84, bars=2, n=1, seed=7)[0]
-    out = render_keys_fluidsynth(beat, tmp_path / "keys.wav")
+    out = render_fluid_stem(beat, Role.KEYS, tmp_path / "keys.wav")
     assert out.exists() and out.stat().st_size > 100_000
 
 
@@ -121,6 +121,43 @@ def test_piano_sf2_picks_first_sorted_asset(
     (piano_dir / "a.sf2").write_bytes(b"RIFF")
     monkeypatch.setattr(stems, "_PIANO_DIR", piano_dir)
     assert _piano_sf2() == piano_dir / "a.sf2"
+
+
+def test_fluid_stem_midi_matches_legacy_for_molina(tmp_path: Path) -> None:
+    from lattice.midi import programs_for_card, write_midi
+    from lattice.render.stems import _write_fluid_midi
+
+    beat = make_beat(style="molina", key="Ab", bpm=66, bars=2, n=1, seed=9)[0]
+    legacy = tmp_path / "legacy.mid"
+    write_midi(
+        beat.unrolled(), beat.bpm, str(legacy),
+        programs=programs_for_card("molina"), roles={Role.KEYS},
+    )
+    new = tmp_path / "new.mid"
+    _write_fluid_midi(beat, Role.KEYS, new)
+    assert legacy.read_bytes() == new.read_bytes()
+
+
+def test_pad_swells_anchor_to_humanized_note_starts(tmp_path: Path) -> None:
+    import mido
+
+    from lattice.render.stems import _write_fluid_midi
+
+    beat = make_beat(style="ballroom", key="F", bpm=112, bars=2, n=1, seed=5)[0]
+    path = tmp_path / "pad.mid"
+    _write_fluid_midi(beat, Role.PAD, path)
+    mid = mido.MidiFile(str(path))
+    for track in mid.tracks:
+        tick = 0
+        last_cc: int | None = None
+        for msg in track:
+            tick += msg.time
+            if msg.type == "control_change" and msg.channel == 3 and msg.control == 11:
+                last_cc = msg.value
+            elif msg.type == "note_on" and msg.channel == 3:
+                assert last_cc is not None and last_cc <= 92, (
+                    f"note_on at tick {tick} preceded by CC11={last_cc}"
+                )
 
 
 def test_piano_dir_is_anchored_to_repo_root() -> None:

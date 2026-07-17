@@ -1,10 +1,12 @@
 import numpy as np
 
-from lattice.cards import FAIYAZ
+from lattice.cards import FAIYAZ, StyleCard, get_card
 from lattice.groove.bass import bass_parts
-from lattice.harmony.elaborate import Segment
+from lattice.harmony.elaborate import Segment, elaborate
+from lattice.harmony.grammar import candidate_loops
 from lattice.model import Role
 from lattice.theory.chord import build
+from lattice.theory.key import parse_key
 from lattice.theory.pitch import parse_tpc, pitch_class
 
 
@@ -13,6 +15,35 @@ def _segs() -> tuple[Segment, ...]:
         Segment(build(parse_tpc("A"), "m9"), "i9", 0, 16),
         Segment(build(parse_tpc("F"), "maj7"), "bVImaj7", 16, 16),
     )
+
+
+def _ballroom_segments() -> tuple[tuple[Segment, ...], StyleCard]:
+    card = get_card("ballroom")
+    rng = np.random.default_rng(7)
+    key = parse_key("F")
+    loop = candidate_loops(card, key, 4)[0]
+    return elaborate(loop, card, rng), card
+
+
+def test_two_feel_half_notes_in_register() -> None:
+    segments, card = _ballroom_segments()
+    parts = bass_parts(segments, card, np.random.default_rng(1))
+    assert parts[Role.SUB] == ()
+    events = parts[Role.BASS]
+    assert events
+    assert all(e.tick % 1920 == 0 for e in events)
+    assert all(28 <= e.pitch <= 52 for e in events if e.pitch is not None)
+
+
+def test_walk_quarters_and_approach() -> None:
+    segments, card = _ballroom_segments()
+    walk_card = card.override(bass_feel="walk")
+    parts = bass_parts(segments, walk_card, np.random.default_rng(1))
+    events = parts[Role.BASS]
+    assert all(e.tick % 960 == 0 for e in events)
+    assert all(28 <= e.pitch <= 52 for e in events if e.pitch is not None)
+    ticks = sorted(e.tick for e in events)
+    assert len(ticks) >= 4 * len(segments)
 
 
 def test_sub_is_roots_only_and_tiles_segments() -> None:
@@ -74,3 +105,15 @@ def test_approach_wins_stab_collision_on_four_slot_segments() -> None:
         events_there = [e for e in parts[Role.BASS] if e.tick == collision_tick]
         assert len(events_there) == 1
         assert events_there[0].vel == 70
+
+
+def test_walk_clips_to_segment_boundary() -> None:
+    card = get_card("ballroom").override(bass_feel="walk")
+    segments = (
+        Segment(build(-1, "6"), "I6", 0, 3),
+        Segment(build(1, "7"), "V7", 3, 5),
+    )
+    parts = bass_parts(segments, card, np.random.default_rng(2))
+    for e in parts[Role.BASS]:
+        seg_end = 1440 if e.tick < 1440 else 3840
+        assert e.tick + e.dur <= seg_end

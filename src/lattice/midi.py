@@ -11,15 +11,18 @@ DRUM_NOTE: Final[dict[DrumSound, int]] = {
     DrumSound.HAT_CLOSED: 42, DrumSound.HAT_OPEN: 46, DrumSound.RIDE: 51,
     DrumSound.TOM_LO: 45, DrumSound.TOM_HI: 50, DrumSound.BONGO: 60,
     DrumSound.SHAKER: 70, DrumSound.GHOST_KICK: 36,
+    DrumSound.BRUSH_TAP: 38, DrumSound.BRUSH_SWIRL: 46,
+    DrumSound.FEATHER: 35, DrumSound.CHICK: 42,
 }
 _CHANNEL: Final[dict[Role, int]] = {
-    Role.KEYS: 0, Role.BASS: 1, Role.SUB: 2,
+    Role.KEYS: 0, Role.BASS: 1, Role.SUB: 2, Role.PAD: 3,
     Role.KICK: 9, Role.SNARE: 9, Role.HAT: 9, Role.PERC: 9,
 }
 _PROGRAM: Final[dict[Role, int]] = {Role.KEYS: 4, Role.BASS: 33, Role.SUB: 38}
 _CARD_PROGRAMS: Final[dict[str, dict[Role, int]]] = {
     "molina": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32},
     "tunisia": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32},
+    "ballroom": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32, Role.PAD: 48},
 }
 
 
@@ -40,6 +43,7 @@ def write_midi(
     path: str,
     programs: dict[Role, int] | None = None,
     roles: set[Role] | None = None,
+    cc11: dict[Role, tuple[tuple[int, int], ...]] | None = None,
 ) -> None:
     progs = programs if programs is not None else _PROGRAM
     mid = mido.MidiFile(ticks_per_beat=960)
@@ -79,6 +83,9 @@ def write_midi(
             off = mido.Message("note_off", channel=ch, note=note, velocity=0, time=0)
             moments.append((start, 1, on))
             moments.append((end, 0, off))
+        for tick, value in (cc11 or {}).get(role, ()):
+            msg = mido.Message("control_change", channel=ch, control=11, value=value, time=0)
+            moments.append((tick, 0, msg))
         moments.sort(key=lambda m: (m[0], m[1]))
         prev = 0
         for tick, _, msg in moments:

@@ -1,7 +1,7 @@
 import numpy as np
 
 from lattice.arrange import build_timeline
-from lattice.cards import FAIYAZ
+from lattice.cards import FAIYAZ, get_card
 from lattice.model import Role, bar_s
 
 
@@ -41,3 +41,26 @@ def test_all_sections_at_least_one_cycle_and_kinds_valid() -> None:
         t = build_timeline(FAIYAZ, bars=4, bpm=90, rng=np.random.default_rng(seed))
         assert all(s.cycles >= 1 for s in t.sections)
         assert {s.kind for s in t.sections} <= {"intro", "a", "b", "drop", "outro"}
+
+
+def test_aaba_pattern_cycles() -> None:
+    card = get_card("ballroom")
+    tl = build_timeline(card, 4, 112, np.random.default_rng(3))
+    body = [s.kind for s in tl.sections if s.kind in ("a", "b")]
+    pattern = ("a", "a", "b", "a")
+    assert all(k == pattern[i % 4] for i, k in enumerate(body))
+
+
+def test_pad_enters_after_first_body_section() -> None:
+    card = get_card("ballroom")
+    tl = build_timeline(card, 4, 112, np.random.default_rng(3))
+    body = [s for s in tl.sections if s.kind not in ("intro", "outro")]
+    assert Role.PAD in body[0].muted
+    assert all(Role.PAD not in s.muted for s in body[1:] if s.kind in ("a", "b"))
+
+
+def test_default_cards_timeline_unchanged() -> None:
+    for name in ("faiyaz", "tunisia"):
+        card = get_card(name)
+        tl = build_timeline(card, 4, 90, np.random.default_rng(3))
+        assert all(Role.PAD not in s.muted or s.kind in ("intro", "outro") for s in tl.sections)

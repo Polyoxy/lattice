@@ -15,6 +15,7 @@ class Role(Enum):
     SNARE = "snare"
     HAT = "hat"
     PERC = "perc"
+    PAD = "pad"
 
 
 class DrumSound(Enum):
@@ -30,6 +31,10 @@ class DrumSound(Enum):
     BONGO = "bongo"
     SHAKER = "shaker"
     GHOST_KICK = "ghost_kick"
+    BRUSH_TAP = "brush_tap"
+    BRUSH_SWIRL = "brush_swirl"
+    FEATHER = "feather"
+    CHICK = "chick"
 
 
 @dataclass(frozen=True, slots=True)

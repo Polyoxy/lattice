@@ -22,6 +22,10 @@ KIT_KEYWORDS: Final[dict[DrumSound, tuple[str, ...]]] = {
     DrumSound.BONGO: ("bongo", "conga"),
     DrumSound.SHAKER: ("shaker", "cabasa"),
     DrumSound.GHOST_KICK: ("kick",),
+    DrumSound.BRUSH_TAP: (),
+    DrumSound.BRUSH_SWIRL: (),
+    DrumSound.FEATHER: (),
+    DrumSound.CHICK: (),
 }
 
 

@@ -15,6 +15,8 @@ QUALITY_IVS: Final[dict[str, tuple[int, ...]]] = {
     "m9": (iv.m3, iv.P5, iv.m7, iv.M9),
     "9": (iv.M3, iv.P5, iv.m7, iv.M9),
     "maj9": (iv.M3, iv.P5, iv.M7, iv.M9),
+    "6": (iv.M3, iv.P5, iv.M6),
+    "m6": (iv.m3, iv.P5, iv.M6),
     "m6add9": (iv.m3, iv.P5, iv.M6, iv.M9),
     "6add9": (iv.M3, iv.P5, iv.M6, iv.M9),
     "add9": (iv.M3, iv.P5, iv.M9),
@@ -51,6 +53,13 @@ def symbol(c: Chord) -> str:
     if c.bass is not None and c.bass != c.root:
         name += "/" + tpc_name(c.bass)
     return name
+
+
+def fifth_interval(c: Chord) -> int:
+    for candidate in (iv.P5, iv.d5, iv.A5):
+        if candidate in c.intervals:
+            return candidate
+    return iv.P5
 
 
 def is_dominant(c: Chord) -> bool:

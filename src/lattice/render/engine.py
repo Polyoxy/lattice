@@ -9,10 +9,9 @@ from lattice.model import Role
 from lattice.render.kits import load_kit
 from lattice.render.master import master
 from lattice.render.mix import render_mix
-from lattice.render.stems import render_keys_fluidsynth, render_role_stem
+from lattice.render.stems import fluid_roles, render_fluid_stem, render_role_stem
 
 _DRUM_ROLES: Final[frozenset[Role]] = frozenset({Role.KICK, Role.SNARE, Role.HAT, Role.PERC})
-_FLUIDSYNTH_KEYS_CARDS: Final[frozenset[str]] = frozenset({"molina", "tunisia"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,13 +29,14 @@ def render_beat(beat: Beat, out_dir: str | Path) -> RenderResult:
     unrolled = beat.unrolled()
     kit = load_kit() if any(unrolled[role] for role in _DRUM_ROLES) else None
 
+    fluid = fluid_roles(beat.card.name)
     stems: dict[Role, Path] = {}
     for role in Role:
         if not unrolled[role]:
             continue
         stem_path = stems_dir / f"{role.value}.wav"
-        if role is Role.KEYS and beat.card.name in _FLUIDSYNTH_KEYS_CARDS:
-            render_keys_fluidsynth(beat, stem_path)
+        if role in fluid:
+            render_fluid_stem(beat, role, stem_path)
         else:
             render_role_stem(beat, role, stem_path, kit=kit)
         stems[role] = stem_path

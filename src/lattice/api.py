@@ -6,9 +6,10 @@ from lattice.arrange import build_timeline
 from lattice.beat import Beat
 from lattice.cards import StyleCard, get_card
 from lattice.groove.bass import bass_parts
-from lattice.groove.drums import conductor_patterns, faiyaz_patterns
+from lattice.groove.drums import ballroom_patterns, conductor_patterns, faiyaz_patterns
 from lattice.groove.keys import keys_events
 from lattice.groove.pocket import apply_pocket
+from lattice.groove.strings import pad_events
 from lattice.harmony.elaborate import elaborate
 from lattice.harmony.grammar import Loop, candidate_loops
 from lattice.harmony.score import contrast, loop_score, rank
@@ -65,7 +66,12 @@ def make_beat(
         loop = ranked[i % len(ranked)]
         segments = elaborate(loop, card, rng)
         voicings = realize(segments, card)
-        drums_gen = conductor_patterns if card.name in ("conductor", "molina") else faiyaz_patterns
+        _drum_gens = {
+            "conductor": conductor_patterns,
+            "molina": conductor_patterns,
+            "ballroom": ballroom_patterns,
+        }
+        drums_gen = _drum_gens.get(card.name, faiyaz_patterns)
         drums = drums_gen(card, bars, rng)
         if rng.random() < card.p_drumless:
             drums = {v: {r: () for r in variant} for v, variant in drums.items()}
@@ -73,6 +79,8 @@ def make_beat(
             **bass_parts(segments, card, rng),
             Role.KEYS: keys_events(segments, voicings, bars, card, rng),
         }
+        if card.has_strings:
+            shared[Role.PAD] = pad_events(segments, voicings, bars)
         parts_a, report = apply_pocket({**drums["A"], **shared}, card, b, _rng(seed, i, 1))
         parts_b, _ = apply_pocket({**drums["B"], **shared}, card, b, _rng(seed, i, 1))
         section_b = None
@@ -81,6 +89,10 @@ def make_beat(
                 function_pool=card.bridge_function_pool,
                 major_function_pool=card.bridge_major_function_pool,
                 loop_len_weights=card.bridge_len_weights,
+            )
+            groove_card = (
+                card.override(bass_feel=card.bridge_bass_feel)
+                if card.bridge_bass_feel else card
             )
             bl = [ln for ln, _ in card.bridge_len_weights]
             bw = [w for _, w in card.bridge_len_weights]
@@ -100,9 +112,11 @@ def make_beat(
             if rng.random() < card.p_drumless:
                 b_drums = {v: {r: () for r in variant} for v, variant in b_drums.items()}
             b_shared = {
-                **bass_parts(b_segments, card, rng),
+                **bass_parts(b_segments, groove_card, rng),
                 Role.KEYS: keys_events(b_segments, b_voicings, bars, card, rng),
             }
+            if card.has_strings:
+                b_shared[Role.PAD] = pad_events(b_segments, b_voicings, bars)
             b_parts_a, _ = apply_pocket({**b_drums["A"], **b_shared}, card, b, _rng(seed, i, 2))
             b_parts_b, _ = apply_pocket({**b_drums["B"], **b_shared}, card, b, _rng(seed, i, 2))
             section_b = SectionRender(b_loop, b_segments, b_voicings, b_parts_a, b_parts_b)
