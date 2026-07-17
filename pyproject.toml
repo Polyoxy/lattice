@@ -1,11 +1,15 @@
 [project]
 name = "lattice"
-version = "0.3.0"
+version = "0.4.0"
 description = "Beat-production engine: theory-constrained generation, style cards, offline render"
 authors = [{ name = "Iverson Alcantara", email = "contact@iversonalcantara.com" }]
 license = "Apache-2.0"
 requires-python = ">=3.12"
-dependencies = ["mido>=1.3", "numpy>=1.26"]
+dependencies = [
+    "mido>=1.3",
+    "numpy>=1.26",
+    "supriya>=26.3b0",
+]
 
 [dependency-groups]
 dev = ["pytest>=8", "hypothesis>=6", "mypy>=1.10", "ruff>=0.5"]
@@ -22,6 +26,7 @@ strict = true
 python_version = "3.12"
 mypy_path = "src"
 packages = ["lattice"]
+plugins = ["supriya.ext.mypy"]
 
 [tool.ruff]
 line-length = 100

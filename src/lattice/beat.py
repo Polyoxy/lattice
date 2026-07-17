@@ -6,6 +6,7 @@ import subprocess
 from dataclasses import asdict, dataclass, field, replace
 from importlib import metadata
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lattice.cards import StyleCard
 from lattice.groove.pocket import PocketReport
@@ -17,6 +18,9 @@ from lattice.section import SectionRender
 from lattice.theory.chord import symbol
 from lattice.theory.key import Key, key_name
 from lattice.theory.pitch import SpelledPitch
+
+if TYPE_CHECKING:
+    from lattice.render.engine import RenderResult
 
 _SF2_DIR = Path("/usr/share/sounds/sf2")
 
@@ -161,3 +165,8 @@ class Beat:
         from lattice.explain import explain_beat
 
         return explain_beat(self)
+
+    def render(self, out_dir: str) -> "RenderResult":
+        from lattice.render.engine import render_beat
+
+        return render_beat(self, out_dir)

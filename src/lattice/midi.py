@@ -39,6 +39,7 @@ def write_midi(
     bpm: int,
     path: str,
     programs: dict[Role, int] | None = None,
+    roles: set[Role] | None = None,
 ) -> None:
     progs = programs if programs is not None else _PROGRAM
     mid = mido.MidiFile(ticks_per_beat=960)
@@ -48,6 +49,8 @@ def write_midi(
     mid.tracks.append(meta)
     mpt = ms_per_tick(bpm)
     for role, events in unrolled.items():
+        if roles is not None and role not in roles:
+            continue
         if not events:
             continue
         track = mido.MidiTrack()

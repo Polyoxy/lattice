@@ -19,7 +19,29 @@ Brent Faiyaz, Conductor Williams, and Jesús Molina — parameters cited in
 that produced the beat; re-running the same `make_beat` call regenerates
 it bit-identically. GM preview: `sudo apt install --no-install-recommends
 fluidsynth fluid-soundfont-gm`, then `beat.preview('out/demo/p.wav')`.
-Real rendering (scsynth, texture buses, mastering) is the next phase.
+## Render
+
+System dependencies:
+
+    apt install supercollider-server lilv-utils calf-plugins x42-plugins dragonfly-reverb-lv2 sox fluidsynth fluid-soundfont-gm
+
+Fetch assets (CC0 drum kit, CC-BY YDP grand piano; licenses in `assets/MANIFEST.md`):
+
+    uv run python scripts/fetch_assets.py
+
+Render a beat offline (real synthesis, deterministic):
+
+    beat.render("out/track")
+    # → out/track/stems/{keys,bass,sub,kick,snare,hat,perc}.wav (only roles the card uses),
+    #   out/track/mix.wav, out/track/master.wav
+
+Re-render a released track from its beat.json:
+
+    python -m lattice.rerender /path/to/song/directory
+
+Quick GM check (fluidsynth + fluid-soundfont-gm; piano voice for molina/tunisia):
+
+    beat.preview("out/demo/p.wav")
 
 ## Cards
 
