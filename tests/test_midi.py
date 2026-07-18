@@ -18,10 +18,15 @@ from lattice.groove.pocket import apply_pocket
 from lattice.harmony.elaborate import elaborate
 from lattice.harmony.functions import build_function
 from lattice.harmony.grammar import Loop
-from lattice.midi import write_midi
+from lattice.midi import _CHANNEL, write_midi
 from lattice.model import Event, Role
 from lattice.theory.key import parse_key
 from lattice.voicing.realize import realize
+
+
+def test_lead_role_has_channel() -> None:
+    assert Role.LEAD.value == "lead"
+    assert _CHANNEL[Role.LEAD] == 4
 
 
 def _beat(seed: int = 0) -> Beat:

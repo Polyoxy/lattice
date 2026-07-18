@@ -70,3 +70,21 @@ def test_new_card_fields_default_inert() -> None:
         assert c.section_pattern == "AB" and c.keys_pattern == "comp"
         assert c.bass_feel == "riff" and c.bridge_bass_feel == ""
         assert c.pad_enters_section == 0 and not c.has_strings
+
+
+def test_chase_era_fields_default_inert() -> None:
+    for name in ("faiyaz", "conductor", "molina", "tunisia", "ballroom"):
+        c = get_card(name)
+        assert c.bridge_keys_pattern == "" and c.pad_pattern == "sustain"
+        assert not c.has_lead and c.lead_enters_section == 0
+        assert c.motifs == ()
+
+
+def test_chase_card_registered() -> None:
+    card = get_card("chase")
+    assert card.p_major_center == 0.0
+    assert card.bpm_range == (150, 170)
+    assert card.keys_pattern == "duel" and card.bridge_keys_pattern == "duel_low"
+    assert card.pad_pattern == "answer" and card.has_lead
+    assert card.pad_enters_section == 2 and card.lead_enters_section == 3
+    assert len(card.motifs) == 5

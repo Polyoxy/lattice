@@ -23,9 +23,10 @@ _DRIFT_MESSAGE = (
 def _convert_field_value(hint: Any, value: Any) -> Any:
     if get_origin(hint) is not tuple:
         return value
-    elem_hint = get_args(hint)[0]
+    args = get_args(hint)
+    elem_hint = args[0]
     if get_origin(elem_hint) is tuple:
-        return tuple(tuple(item) for item in value)
+        return tuple(_convert_field_value(elem_hint, item) for item in value)
     return tuple(value)
 
 
@@ -48,6 +49,42 @@ def _restrict_to_shape(value: Any, shape: Any) -> Any:
     return value
 
 
+def _known_role_names(original_data: dict[str, Any]) -> set[str]:
+    """Role-name vocabulary the original json actually exercises.
+
+    `beat.py` serializes each timeline section's `muted` from live `Role` enum
+    membership, so a role added after a beat.json was released (LEAD today,
+    more later) mutes unconditionally in the rebuild even though the original
+    render never emitted it and never muted it. A role this json never
+    mentions anywhere cannot change what it renders.
+    """
+    known = set(original_data["parts_a"]) | set(original_data["parts_b"])
+    section_b = original_data.get("section_b")
+    if section_b is not None:
+        known |= set(section_b["parts_a"]) | set(section_b["parts_b"])
+    for section in original_data["timeline"]:
+        known.update(section["muted"])
+    return known
+
+
+def _restrict_muted_to_known_roles(
+    rebuilt_data: dict[str, Any], known_roles: set[str]
+) -> dict[str, Any]:
+    """Drop roles the original json never knew about from the rebuild's mutes.
+
+    `_restrict_to_shape` recurses element-wise on lists only when lengths
+    match, so it cannot mask a newer Role enum member inflating a mute list
+    beyond the original's length — that reads as drift on every released
+    beat.json once the enum grows. Filtering rebuilt_data first keeps the
+    lengths (and drift comparison) honest.
+    """
+    restricted_timeline = [
+        {**section, "muted": [r for r in section["muted"] if r in known_roles]}
+        for section in rebuilt_data["timeline"]
+    ]
+    return {**rebuilt_data, "timeline": restricted_timeline}
+
+
 def rebuild(beat_json: Path, *, force: bool = False) -> Beat:
     data: dict[str, Any] = json.loads(Path(beat_json).read_text())
     card = _reconstruct_card(data["card"])
@@ -60,6 +97,7 @@ def rebuild(beat_json: Path, *, force: bool = False) -> Beat:
     original_data: dict[str, Any] = dict(data)
     rebuilt_data.pop("engine", None)
     original_data.pop("engine", None)
+    rebuilt_data = _restrict_muted_to_known_roles(rebuilt_data, _known_role_names(original_data))
     pre_bridge_original = "section_b" not in original_data
     drifted = _restrict_to_shape(rebuilt_data, original_data) != original_data
     if pre_bridge_original and rebuilt_data.get("section_b") is not None:

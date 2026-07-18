@@ -15,7 +15,7 @@ DRUM_NOTE: Final[dict[DrumSound, int]] = {
     DrumSound.FEATHER: 35, DrumSound.CHICK: 42,
 }
 _CHANNEL: Final[dict[Role, int]] = {
-    Role.KEYS: 0, Role.BASS: 1, Role.SUB: 2, Role.PAD: 3,
+    Role.KEYS: 0, Role.BASS: 1, Role.SUB: 2, Role.PAD: 3, Role.LEAD: 4,
     Role.KICK: 9, Role.SNARE: 9, Role.HAT: 9, Role.PERC: 9,
 }
 _PROGRAM: Final[dict[Role, int]] = {Role.KEYS: 4, Role.BASS: 33, Role.SUB: 38}
@@ -23,6 +23,7 @@ _CARD_PROGRAMS: Final[dict[str, dict[Role, int]]] = {
     "molina": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32},
     "tunisia": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32},
     "ballroom": {Role.KEYS: 0, Role.BASS: 32, Role.SUB: 32, Role.PAD: 48},
+    "chase": {Role.KEYS: 0, Role.BASS: 33, Role.SUB: 38, Role.LEAD: 40, Role.PAD: 48},
 }
 
 

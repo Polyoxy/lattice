@@ -163,3 +163,58 @@ def test_ballroom_render_deterministic(tmp_path: Path) -> None:
     a = _render("ballroom", 5, tmp_path / "a", key="F", bpm=112)
     b = _render("ballroom", 5, tmp_path / "b", key="F", bpm=112)
     assert a.master.read_bytes() == b.master.read_bytes()
+
+
+# Chase's spec speculated the higher LPF dial (16kHz vs ballroom's 14kHz) would read
+# brighter -- "night-glass vs warm room" (docs/specs/2026-07-17-chase-card-design.md
+# S6-S7). Measured at production config (_render("chase", 5, tmp, key="Dm", bpm=160))
+# against ballroom's own gate config (_render("ballroom", 5, tmp, key="F", bpm=112)):
+# chase master high(16-21k)/mid(1-5k) = 0.002400, ballroom = 0.002924 -- chase reads
+# DARKER, the opposite of the spec's assumption. Reproduced at seed=13 (chase
+# 0.002450, ballroom 0.002932, same ~0.83x relationship) -- not seed noise, a
+# structural property of the instrumentation. Root cause, per-stem on the same
+# renders: ballroom's brush-kit SNARE stem alone carries high(16-21k)=28.62
+# (high/mid=1.26 for that stem -- the noise-shaped brush/swirl samples are
+# intrinsically broadband) against chase's SNARE/rim at high=0.53 (h/m=0.053) and
+# HAT at high=2.75. Every role on both cards passes through three cascaded LPF
+# stages at the same corner frequency (chase_bus/ballroom_bus once, master_out
+# twice) -- instrument choice swamps the 2kHz cutoff difference. Not a bug:
+# chase_bus mirrors ballroom_bus's structure exactly and is registered in
+# add_synthdefs; ballroom's own warmth gate (high < mid*0.05) still clears by 17x.
+# Locking the true, reproduced relationship plus the brief's absolute ceiling
+# sanity; spec S7 corrected to match (task 11).
+def test_chase_master_darker_than_ballroom(tmp_path: Path) -> None:
+    chase = _render("chase", 5, tmp_path / "c", key="Dm", bpm=160)
+    ball = _render("ballroom", 5, tmp_path / "b", key="F", bpm=112)
+    c_data, c_rate = _read(chase.master)
+    b_data, b_rate = _read(ball.master)
+    c_mono = c_data.mean(axis=1)
+    b_mono = b_data.mean(axis=1)
+    c_ratio = band_energy(c_mono, c_rate, 16000, 21000) / band_energy(c_mono, c_rate, 1000, 5000)
+    b_ratio = band_energy(b_mono, b_rate, 16000, 21000) / band_energy(b_mono, b_rate, 1000, 5000)
+    assert c_ratio < b_ratio
+    assert c_ratio < 0.2
+
+
+# Measured at production config (_render("chase", 5, tmp_path, key="Dm", bpm=160)):
+# stem peaks keys 0.594788, lead 0.303833, pad 0.301971 (bass 0.274782 and sub
+# 0.746976 also healthy but not gated here -- the brief scopes this trio to
+# KEYS/LEAD/PAD, chase's three fluidsynth voices). Lower bounds set for >=2x margin
+# (measured/threshold): keys 0.28 (2.12x), lead 0.14 (2.17x), pad 0.14 (2.16x).
+# Upper bounds (0.9/0.9/0.85) are a clipping sanity ceiling, not a margin
+# computation -- same convention as test_ballroom_cross_engine_levels.
+def test_chase_cross_engine_levels(tmp_path: Path) -> None:
+    result = _render("chase", 5, tmp_path, key="Dm", bpm=160)
+    peaks = {}
+    for role in (Role.KEYS, Role.LEAD, Role.PAD):
+        data, _ = _read(result.stems[role])
+        peaks[role] = float(np.abs(data).max())
+    assert 0.28 <= peaks[Role.KEYS] <= 0.9
+    assert 0.14 <= peaks[Role.LEAD] <= 0.9
+    assert 0.14 <= peaks[Role.PAD] <= 0.85
+
+
+def test_chase_render_deterministic(tmp_path: Path) -> None:
+    a = _render("chase", 5, tmp_path / "a", key="Dm", bpm=160)
+    b = _render("chase", 5, tmp_path / "b", key="Dm", bpm=160)
+    assert a.master.read_bytes() == b.master.read_bytes()

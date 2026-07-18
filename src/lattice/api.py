@@ -6,8 +6,14 @@ from lattice.arrange import build_timeline
 from lattice.beat import Beat
 from lattice.cards import StyleCard, get_card
 from lattice.groove.bass import bass_parts
-from lattice.groove.drums import ballroom_patterns, conductor_patterns, faiyaz_patterns
+from lattice.groove.drums import (
+    ballroom_patterns,
+    chase_patterns,
+    conductor_patterns,
+    faiyaz_patterns,
+)
 from lattice.groove.keys import keys_events
+from lattice.groove.lines import conversation
 from lattice.groove.pocket import apply_pocket
 from lattice.groove.strings import pad_events
 from lattice.harmony.elaborate import elaborate
@@ -70,17 +76,38 @@ def make_beat(
             "conductor": conductor_patterns,
             "molina": conductor_patterns,
             "ballroom": ballroom_patterns,
+            "chase": chase_patterns,
         }
         drums_gen = _drum_gens.get(card.name, faiyaz_patterns)
         drums = drums_gen(card, bars, rng)
         if rng.random() < card.p_drumless:
             drums = {v: {r: () for r in variant} for v, variant in drums.items()}
+        conv = (
+            conversation(
+                segments, card, bars, rng,
+                caller=Role.KEYS, answerers=(Role.PAD, Role.LEAD), density_bars=2,
+            )
+            if card.has_lead else {}
+        )
+        # PAD/LEAD answers are invisible to keys_events' own duel_events skip (that only
+        # carries the KEYS-role call); without their spans here, RH stabs land underneath
+        # the answer line instead of yielding to it.
+        avoid_spans = tuple(
+            (e.tick, e.tick + e.dur) for e in (*conv.get(Role.PAD, ()), *conv.get(Role.LEAD, ()))
+        )
         shared = {
             **bass_parts(segments, card, rng),
-            Role.KEYS: keys_events(segments, voicings, bars, card, rng),
+            Role.KEYS: keys_events(
+                segments, voicings, bars, card, rng, conv.get(Role.KEYS, ()), avoid_spans
+            ),
         }
         if card.has_strings:
-            shared[Role.PAD] = pad_events(segments, voicings, bars)
+            shared[Role.PAD] = (
+                conv.get(Role.PAD, ()) if card.pad_pattern == "answer"
+                else pad_events(segments, voicings, bars)
+            )
+        if card.has_lead:
+            shared[Role.LEAD] = conv[Role.LEAD]
         parts_a, report = apply_pocket({**drums["A"], **shared}, card, b, _rng(seed, i, 1))
         parts_b, _ = apply_pocket({**drums["B"], **shared}, card, b, _rng(seed, i, 1))
         section_b = None
@@ -93,6 +120,10 @@ def make_beat(
             groove_card = (
                 card.override(bass_feel=card.bridge_bass_feel)
                 if card.bridge_bass_feel else card
+            )
+            keys_card = (
+                card.override(keys_pattern=card.bridge_keys_pattern)
+                if card.bridge_keys_pattern else card
             )
             bl = [ln for ln, _ in card.bridge_len_weights]
             bw = [w for _, w in card.bridge_len_weights]
@@ -111,12 +142,26 @@ def make_beat(
             b_drums = drums_gen(bridge_card, bars, rng)
             if rng.random() < card.p_drumless:
                 b_drums = {v: {r: () for r in variant} for v, variant in b_drums.items()}
+            conv_b = (
+                conversation(
+                    b_segments, card, bars, rng,
+                    caller=Role.LEAD, answerers=(Role.PAD, Role.KEYS), density_bars=1,
+                )
+                if card.has_lead else {}
+            )
             b_shared = {
                 **bass_parts(b_segments, groove_card, rng),
-                Role.KEYS: keys_events(b_segments, b_voicings, bars, card, rng),
+                Role.KEYS: keys_events(
+                    b_segments, b_voicings, bars, keys_card, rng, conv_b.get(Role.KEYS, ())
+                ),
             }
             if card.has_strings:
-                b_shared[Role.PAD] = pad_events(b_segments, b_voicings, bars)
+                b_shared[Role.PAD] = (
+                    conv_b.get(Role.PAD, ()) if card.pad_pattern == "answer"
+                    else pad_events(b_segments, b_voicings, bars)
+                )
+            if card.has_lead:
+                b_shared[Role.LEAD] = conv_b[Role.LEAD]
             b_parts_a, _ = apply_pocket({**b_drums["A"], **b_shared}, card, b, _rng(seed, i, 2))
             b_parts_b, _ = apply_pocket({**b_drums["B"], **b_shared}, card, b, _rng(seed, i, 2))
             section_b = SectionRender(b_loop, b_segments, b_voicings, b_parts_a, b_parts_b)

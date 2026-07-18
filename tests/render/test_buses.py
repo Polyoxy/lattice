@@ -11,3 +11,9 @@ def test_ballroom_bus_compiles() -> None:
     compiled = compile_buses()
     assert "ballroom_bus" in compiled
     assert len(compiled["ballroom_bus"]) > 0
+
+
+def test_chase_bus_compiles() -> None:
+    compiled = compile_buses()
+    assert "chase_bus" in compiled
+    assert len(compiled["chase_bus"]) > 0

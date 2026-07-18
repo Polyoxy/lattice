@@ -55,6 +55,18 @@ IDIOM_SHAPES: Final[frozenset[tuple[str, ...]]] = frozenset(
     canonical_rotation(s) for s in _RAW_IDIOM_SHAPES
 )
 
+CARD_IDIOM_SHAPES: Final[dict[str, frozenset[tuple[str, ...]]]] = {
+    "chase": frozenset(
+        canonical_rotation(s)
+        for s in (
+            ("i7", "bVII7", "bVImaj7", "V7"),
+            ("i7", "bVII7", "bVImaj7", "V7b9"),
+            ("i9", "iim7b5", "V7b9"),
+            ("i7", "iv9", "bVII7", "bVImaj7"),
+        )
+    ),
+}
+
 _TONIC_NAMES: Final = frozenset({"i7", "i9", "i6add9", "Imaj7", "I6", "I6add9"})
 _SUBDOM_DOM: Final = frozenset({"iv7", "iv9", "iv6add9", "v7", "V7", "V7b9", "V7b13", "bVImaj7"})
 
@@ -101,7 +113,9 @@ def loop_score(loop: Loop, card: StyleCard) -> float:
         for i in range(len(loop.items))
     )
     vl_term = -W_VL * vl_total / len(loop.items)
-    idiom = W_IDIOM if canonical_rotation(names) in IDIOM_SHAPES else 0.0
+    canonical = canonical_rotation(names)
+    card_shapes = CARD_IDIOM_SHAPES.get(card.name, frozenset())
+    idiom = W_IDIOM if canonical in IDIOM_SHAPES or canonical in card_shapes else 0.0
     has_tonic = bool(_TONIC_NAMES & set(names))
     avoid_ok = len(_SUBDOM_DOM & set(names)) >= 2
     tonic_term = W_TONIC if has_tonic else (W_TONIC * card.p_tonic_avoid if avoid_ok else -W_TONIC)

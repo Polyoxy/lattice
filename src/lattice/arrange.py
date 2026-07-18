@@ -9,6 +9,18 @@ _ALL_BUT_KEYS = frozenset(r for r in Role if r is not Role.KEYS)
 _DRUMS = frozenset({Role.KICK, Role.SNARE, Role.HAT, Role.PERC})
 
 
+def _mute_until(sections: list[Section], role: Role, enters: int) -> None:
+    if not enters:
+        return
+    body_i = 0
+    for j, s in enumerate(sections):
+        if s.kind in ("intro", "outro"):
+            continue
+        body_i += 1
+        if body_i < enters:
+            sections[j] = Section(s.kind, s.cycles, s.muted | {role}, s.transpose)
+
+
 def build_timeline(
     card: StyleCard, bars: int, bpm: int, rng: np.random.Generator
 ) -> Timeline:
@@ -48,14 +60,6 @@ def build_timeline(
                 sections[j] = Section(
                     s.kind, s.cycles, s.muted, transpose=card.transpose_semitones
                 )
-    if card.pad_enters_section:
-        body_i = 0
-        for j, s in enumerate(sections):
-            if s.kind in ("intro", "outro"):
-                continue
-            body_i += 1
-            if body_i < card.pad_enters_section:
-                sections[j] = Section(
-                    s.kind, s.cycles, s.muted | {Role.PAD}, s.transpose
-                )
+    _mute_until(sections, Role.PAD, card.pad_enters_section)
+    _mute_until(sections, Role.LEAD, card.lead_enters_section)
     return Timeline(tuple(sections))

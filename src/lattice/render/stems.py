@@ -102,21 +102,27 @@ _FLUID_VOICES: Final[dict[str, dict[Role, str]]] = {
     "molina": {Role.KEYS: "piano"},
     "tunisia": {Role.KEYS: "piano"},
     "ballroom": {Role.KEYS: "piano", Role.BASS: "gm", Role.PAD: "gm"},
+    "chase": {Role.KEYS: "piano", Role.LEAD: "gm", Role.PAD: "gm"},
 }
 _SWELL_STEPS: Final = 8
+_SWELL_MIN_DUR: Final = 960
 
 
 def fluid_roles(card_name: str) -> dict[Role, str]:
     return _FLUID_VOICES.get(card_name, {})
 
 
-def _swell_ramps(beat: Beat) -> tuple[tuple[int, int], ...]:
+def _swell_ramps(beat: Beat, role: Role) -> tuple[tuple[int, int], ...]:
     # Anchor each ramp to the same humanized note_on tick write_midi computes,
     # or micro-timed pads sound before their swell-start CC and inherit the
-    # previous chord's full-swell tail.
+    # previous chord's full-swell tail. The dur filter exempts short stabs
+    # from swells for any role: ballroom's sustained pads all pass, while
+    # chase's PAD answer stabs and short LEAD notes are excluded by design.
     mpt = ms_per_tick(beat.bpm)
     ramps: list[tuple[int, int]] = []
-    for e in beat.unrolled()[Role.PAD]:
+    for e in beat.unrolled()[role]:
+        if e.dur < _SWELL_MIN_DUR:
+            continue
         start = max(0, e.tick + round(e.micro_ms / mpt))
         for k in range(_SWELL_STEPS):
             tick = start + (e.dur * k) // _SWELL_STEPS
@@ -129,7 +135,7 @@ def _write_fluid_midi(beat: Beat, role: Role, mid: Path) -> None:
     from lattice.midi import programs_for_card, write_midi
 
     cc: dict[Role, tuple[tuple[int, int], ...]] | None = (
-        {role: _swell_ramps(beat)} if role is Role.PAD else None
+        {role: _swell_ramps(beat, role)} if role in (Role.PAD, Role.LEAD) else None
     )
     write_midi(
         beat.unrolled(), beat.bpm, str(mid),

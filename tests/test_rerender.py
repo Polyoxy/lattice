@@ -4,7 +4,9 @@ from pathlib import Path
 import pytest
 
 from lattice import make_beat, rerender
-from lattice.rerender import main, rebuild
+from lattice.rerender import _convert_field_value, main, rebuild
+
+_WHITE_GLOVES_FIXTURE = Path(__file__).parent / "fixtures" / "white_gloves_beat.json"
 
 
 def test_rebuild_round_trips_exactly(tmp_path: Path) -> None:
@@ -12,6 +14,23 @@ def test_rebuild_round_trips_exactly(tmp_path: Path) -> None:
     original.save(str(tmp_path))
     rebuilt = rebuild(tmp_path / "beat.json")
     assert rebuilt.to_json() == original.to_json()
+
+
+def test_rebuild_round_trips_exactly_for_chase(tmp_path: Path) -> None:
+    original = make_beat(style="chase", key="Dm", bpm=160, bars=2, n=1, seed=5)[0]
+    original.save(str(tmp_path))
+    rebuilt = rebuild(tmp_path / "beat.json")
+    assert rebuilt.to_json() == original.to_json()
+
+
+def test_rebuild_tolerates_roles_the_json_predates(tmp_path: Path) -> None:
+    # Frozen copy of a released beat.json from before Role.LEAD existed. Its
+    # timeline muted lists predate the enum growing, so this is the
+    # cross-commit regression tripwire the drift guard needs: rebuilding a
+    # real released track must not false-positive as it did before the
+    # rebuilt-side role filtering (Finding 1).
+    (tmp_path / "beat.json").write_text(_WHITE_GLOVES_FIXTURE.read_text())
+    rebuild(tmp_path / "beat.json")
 
 
 def test_rebuild_detects_drift(tmp_path: Path) -> None:
@@ -176,3 +195,11 @@ def test_main_unknown_card_name_exits_cleanly(
     err = capsys.readouterr().err
     assert "no_such_card" in err
     assert "Traceback" not in err
+
+
+def test_convert_field_value_recurses_three_deep() -> None:
+    hint = tuple[tuple[tuple[int, ...], tuple[int, ...]], ...]
+    value = [[[0, -3], [0, 2]], [[1, -4, 1], [0, 1, 2]]]
+    out = _convert_field_value(hint, value)
+    assert out == (((0, -3), (0, 2)), ((1, -4, 1), (0, 1, 2)))
+    assert isinstance(out[0][0], tuple)

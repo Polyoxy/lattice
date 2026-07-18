@@ -2,7 +2,12 @@ import numpy as np
 
 from lattice import make_beat
 from lattice.cards import CONDUCTOR, FAIYAZ, get_card
-from lattice.groove.drums import ballroom_patterns, conductor_patterns, faiyaz_patterns
+from lattice.groove.drums import (
+    ballroom_patterns,
+    chase_patterns,
+    conductor_patterns,
+    faiyaz_patterns,
+)
 from lattice.model import DrumSound, Role
 
 
@@ -106,3 +111,19 @@ def test_ballroom_brush_taps_get_snap_drag() -> None:
     assert len(taps) >= 4
     mean_micro = sum(e.micro_ms for e in taps) / len(taps)
     assert mean_micro >= 3.0
+
+
+def test_chase_pulse() -> None:
+    card = get_card("chase")
+    patterns = chase_patterns(card, 2, np.random.default_rng(5))
+    a = patterns["A"]
+    kicks = a[Role.KICK]
+    assert all(e.drum is DrumSound.KICK for e in kicks)
+    assert {e.tick % 3840 for e in kicks} <= {0, 1440, 2400}
+    rims = a[Role.SNARE]
+    assert all(e.drum is DrumSound.RIM for e in rims)
+    assert {e.tick % 3840 for e in rims} == {1920}
+    hats = a[Role.HAT]
+    assert {e.tick % 480 for e in hats} == {0}
+    assert len(hats) == 16
+    assert a[Role.PERC] == ()

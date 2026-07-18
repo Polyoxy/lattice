@@ -160,6 +160,40 @@ def test_pad_swells_anchor_to_humanized_note_starts(tmp_path: Path) -> None:
                 )
 
 
+def test_chase_lead_midi_has_violin_and_swells(tmp_path: Path) -> None:
+    import mido
+
+    from lattice.render.stems import _write_fluid_midi
+
+    beat = make_beat(style="chase", key="Dm", bpm=160, bars=2, n=1, seed=7)[0]
+    if not beat.unrolled()[Role.LEAD]:
+        pytest.skip("seed has no bridge lead events in 2 bars")
+    path = tmp_path / "lead.mid"
+    _write_fluid_midi(beat, Role.LEAD, path)
+    mid = mido.MidiFile(str(path))
+    msgs = [m for t in mid.tracks for m in t]
+    assert any(m.type == "program_change" and m.program == 40 for m in msgs)
+
+
+def test_chase_pad_swells_skip_short_stabs(tmp_path: Path) -> None:
+    import mido
+
+    from lattice.render.stems import _write_fluid_midi
+
+    beat = make_beat(style="chase", key="Dm", bpm=160, bars=2, n=1, seed=7)[0]
+    path = tmp_path / "pad.mid"
+    _write_fluid_midi(beat, Role.PAD, path)
+    mid = mido.MidiFile(str(path))
+    msgs = [m for t in mid.tracks for m in t]
+    cc_values = [m.value for m in msgs if m.type == "control_change" and m.control == 11]
+    note_ons = [m for m in msgs if m.type == "note_on"]
+    assert cc_values, "chase PAD sustains should carry swells"
+    # Each swell ramp anchors exactly one CC11 at the base (minimum) value, so
+    # counting them counts swelled notes; short stabs contribute none.
+    ramp_starts = sum(1 for v in cc_values if v == min(cc_values))
+    assert ramp_starts < len(note_ons), "short PAD stabs must carry no swell ramp"
+
+
 def test_piano_dir_is_anchored_to_repo_root() -> None:
     from lattice.render.kits import _KIT_DIR
     from lattice.render.stems import _PIANO_DIR

@@ -40,3 +40,20 @@ def test_ballroom_period_progressions_rank_top_decile() -> None:
         match = [lp for lp in pool if lp.names() == names]
         assert match, names
         assert loop_score(match[0], card) >= cutoff, names
+
+
+@pytest.mark.slow
+def test_chase_lament_ranks_top_decile() -> None:
+    card = get_card("chase")
+    key = parse_key("Dm")
+    pool = [lp for lp in candidate_loops(card, key, 4) if len(lp.items) == 4]
+    assert pool
+    scores = sorted((loop_score(lp, card) for lp in pool), reverse=True)
+    cutoff = scores[max(0, len(scores) // 10 - 1)]
+    for names in [
+        ("i7", "bVII7", "bVImaj7", "V7"),
+        ("i7", "bVII7", "bVImaj7", "V7b9"),
+    ]:
+        match = [lp for lp in pool if lp.names() == names]
+        assert match, names
+        assert loop_score(match[0], card) >= cutoff, names

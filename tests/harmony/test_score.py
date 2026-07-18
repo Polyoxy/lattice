@@ -70,3 +70,16 @@ def test_contrast_rewards_difference_and_cadence() -> None:
     bridge = Loop(key, tuple(build_function(key, n) for n in ("iv7", "bVII7", "i7", "V7")), bars=4)
     assert contrast(vamp, bridge) > contrast(vamp, same)
     assert contrast(vamp, same) < 1.0
+
+
+def test_card_scoped_shapes_fire_only_for_their_card() -> None:
+    from lattice.cards import get_card
+    from lattice.harmony.score import CARD_IDIOM_SHAPES, IDIOM_SHAPES
+
+    lament = ("i7", "bVII7", "bVImaj7", "V7")
+    loop = _loop("Dm", lament)
+    conductor = get_card("conductor")
+    base = loop_score(loop, conductor)
+    assert canonical_rotation(lament) in CARD_IDIOM_SHAPES["chase"]
+    assert canonical_rotation(lament) not in IDIOM_SHAPES
+    assert loop_score(loop, conductor) == base

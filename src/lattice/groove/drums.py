@@ -168,3 +168,36 @@ def ballroom_patterns(
         }
 
     return {"A": variant(0), "B": variant(8)}
+
+
+def chase_patterns(
+    card: StyleCard, bars: int, rng: np.random.Generator
+) -> dict[str, dict[Role, tuple[Event, ...]]]:
+    def variant(dense: bool) -> dict[Role, tuple[Event, ...]]:
+        kick: list[Event] = []
+        snare: list[Event] = []
+        hat: list[Event] = []
+        lo, hi = card.hat_vels
+        for bar in range(bars):
+            base = bar * ticks_per_bar()
+            kick.append(Event(base, _HIT, int(rng.integers(98, 110)), drum=DrumSound.KICK))
+            if rng.random() < 0.35:
+                extra = 1440 if rng.random() < 0.5 else 2400
+                vel = int(rng.integers(78, 92))
+                kick.append(Event(base + extra, _HIT, vel, drum=DrumSound.KICK))
+            snare.append(Event(base + 1920, _HIT, int(rng.integers(70, 82)), drum=DrumSound.RIM))
+            for i in range(8):
+                wave = hi if i % 2 == 0 else lo
+                vel = int(rng.integers(wave - 4, wave + 5))
+                hat.append(Event(base + i * 480, _HIT, vel, drum=DrumSound.HAT_CLOSED))
+            if dense:
+                for t in (2160, 3600):
+                    hat.append(Event(base + t, _HIT, lo - 6, drum=DrumSound.HAT_CLOSED))
+        return {
+            Role.KICK: tuple(sorted(kick, key=lambda e: e.tick)),
+            Role.SNARE: tuple(snare),
+            Role.HAT: tuple(sorted(hat, key=lambda e: e.tick)),
+            Role.PERC: (),
+        }
+
+    return {"A": variant(False), "B": variant(True)}

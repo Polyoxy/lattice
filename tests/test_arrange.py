@@ -64,3 +64,19 @@ def test_default_cards_timeline_unchanged() -> None:
         card = get_card(name)
         tl = build_timeline(card, 4, 90, np.random.default_rng(3))
         assert all(Role.PAD not in s.muted or s.kind in ("intro", "outro") for s in tl.sections)
+
+
+def test_lead_enters_at_first_bridge() -> None:
+    card = get_card("chase")
+    tl = build_timeline(card, 4, 160, np.random.default_rng(3))
+    body = [s for s in tl.sections if s.kind not in ("intro", "outro")]
+    assert Role.LEAD in body[0].muted and Role.LEAD in body[1].muted
+    first_b = next(i for i, s in enumerate(body) if s.kind == "b")
+    assert first_b == 2
+    assert all(Role.LEAD not in s.muted for s in body[first_b:] if s.kind in ("a", "b"))
+
+
+def test_lead_untouched_for_other_cards() -> None:
+    tl = build_timeline(get_card("ballroom"), 4, 112, np.random.default_rng(3))
+    body = [s for s in tl.sections if s.kind not in ("intro", "outro")]
+    assert all(Role.LEAD not in s.muted for s in body)

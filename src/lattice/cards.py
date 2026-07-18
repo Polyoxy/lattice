@@ -58,6 +58,11 @@ class StyleCard:
     bridge_bass_feel: str = ""
     pad_enters_section: int = 0
     has_strings: bool = False
+    bridge_keys_pattern: str = ""
+    pad_pattern: str = "sustain"
+    has_lead: bool = False
+    lead_enters_section: int = 0
+    motifs: tuple[tuple[tuple[int, ...], tuple[int, ...]], ...] = ()
 
     def override(self, **kwargs: Any) -> StyleCard:
         return replace(self, **kwargs)
@@ -386,7 +391,97 @@ BALLROOM: Final = StyleCard(
     has_strings=True,
 )
 
-_CARDS: Final = {c.name: c for c in (FAIYAZ, CONDUCTOR, MOLINA, TUNISIA, BALLROOM)}
+CHASE: Final = StyleCard(
+    name="chase",
+    centers=("Dm", "Gm", "Cm", "Fm"),
+    p_major_center=0.0,
+    major_centers=("C",),
+    loop_len_weights=((2, 0.3), (4, 0.7)),
+    function_pool=(
+        "i7", "i9", "iv7", "iv9", "bVII7", "bVImaj7", "V7", "V7b9", "v7", "iim7b5",
+    ),
+    major_function_pool=(
+        "Imaj7", "ii7maj", "iii7", "IVmaj7", "V7maj", "vi7", "ii9",
+    ),
+    p_kicker=0.0,
+    p_phrygian_vamp=0.0,
+    p_tonic_avoid=0.1,
+    allow_tritone_sub=False,
+    allow_chromatic_mediant=True,
+    elaboration_density=0.12,
+    max_changes_per_bar=2,
+    register_lo=50,
+    register_hi=74,
+    rootless=False,
+    voicing_density=0.5,
+    templates=(
+        "close4", "close5", "drop2", "quartal", "us_triad", "sus43", "add9",
+    ),
+    bpm_range=(150, 170),
+    swing_band=(0.5, 0.5),
+    snap_rush_ms=(0.0, 0.0),
+    clap_drag_ms=(0.0, 0.0),
+    kick_per_bar=(1, 2),
+    hat_vels=(42, 60),
+    p_hat_roll=0.0,
+    p_perc_bed=0.0,
+    p_turnaround=0.0,
+    p_drumless=0.0,
+    ghost_kicks=False,
+    timing_sigma_ms=2.5,
+    vel_jitter=0.06,
+    p_bass_approach=0.2,
+    p_bass_stab=0.15,
+    p_bass_glide=0.3,
+    p_keys_anticipation=0.0,
+    keys_reattack="sustain",
+    target_len_s=(180, 225),
+    p_transpose_event=0.0,
+    transpose_semitones=0,
+    texture=(
+        ("lpf_hz", 16000.0), ("room_size", 0.35), ("verb_mix", 0.12), ("glue_db", 2.0),
+    ),
+    provenance=(
+        ("bpm_range", "designed: highway pulse"),
+        ("swing_band", "designed: dead straight, the road doesn't swing"),
+        ("motifs", "designed"),
+        ("section_pattern", "designed: the solo needs a home"),
+        (
+            "card_idioms",
+            "cited: descending-tetrachord lament figure; designed weights",
+        ),
+        (
+            "snap_rush_ms",
+            "designed: dead-straight rim, not dragged; supersedes spec table's "
+            "(-4.0, 0.0), corrected in task 11",
+        ),
+    ),
+    has_bridge=True,
+    bridge_function_pool=("i7", "iv9", "bVImaj7", "V7b9", "iim7b5", "bVII7"),
+    bridge_major_function_pool=(
+        "Imaj7", "ii7maj", "iii7", "IVmaj7", "V7maj", "vi7", "ii9",
+    ),
+    bridge_len_weights=((2, 0.5), (4, 0.5)),
+    section_pattern="AABA",
+    keys_pattern="duel",
+    bass_feel="riff",
+    pad_enters_section=2,
+    has_strings=True,
+    bridge_keys_pattern="duel_low",
+    pad_pattern="answer",
+    has_lead=True,
+    lead_enters_section=3,
+    motifs=(
+        # sigh, cry, spiral, push, defiance
+        ((-3, 0), (0, 2)),
+        ((1, -4, 1), (0, 1, 2)),
+        ((0, -2, -4, 1), (0, 1, 2, 3)),
+        ((0, 0, 0), (0, 1, 3)),
+        ((1, -2, 0), (0, 2, 3)),
+    ),
+)
+
+_CARDS: Final = {c.name: c for c in (FAIYAZ, CONDUCTOR, MOLINA, TUNISIA, BALLROOM, CHASE)}
 
 
 def get_card(name: str) -> StyleCard:

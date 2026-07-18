@@ -16,6 +16,7 @@ class Role(Enum):
     HAT = "hat"
     PERC = "perc"
     PAD = "pad"
+    LEAD = "lead"
 
 
 class DrumSound(Enum):

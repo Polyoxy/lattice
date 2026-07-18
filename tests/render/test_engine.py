@@ -39,3 +39,24 @@ def test_ballroom_beat_structure() -> None:
     assert unrolled[Role.PAD]
     assert unrolled[Role.BASS]
     assert not unrolled[Role.SUB]
+
+
+def test_chase_escalation_structure() -> None:
+    beat = make_beat(style="chase", key="Dm", bpm=160, bars=2, n=1, seed=5)[0]
+    assert beat.section_b is not None
+    unrolled = beat.unrolled()
+    assert unrolled[Role.LEAD]
+    assert unrolled[Role.PAD]
+    lead_ticks = {e.tick for e in unrolled[Role.LEAD]}
+    body = [s.kind for s in beat.timeline.sections if s.kind in ("a", "b")]
+    assert body[:3] == ["a", "a", "b"]
+    # lead_enters_section=3: no LEAD event before the first "b" body section's
+    # start tick (cycles accumulate across every section, intro/drop included,
+    # same as Beat.unrolled()'s own offset arithmetic).
+    cycles_before_b = 0
+    for s in beat.timeline.sections:
+        if s.kind == "b":
+            break
+        cycles_before_b += s.cycles
+    boundary = cycles_before_b * beat.bars * 3840
+    assert min(lead_ticks) >= boundary

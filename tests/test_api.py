@@ -69,3 +69,23 @@ def test_bars_below_minimum_rejected() -> None:
 
     with pytest.raises(ValueError, match="bars must be >= 1"):
         make_beat(key="Am", bpm=72, bars=0, n=1, seed=0)
+
+
+def test_chase_lead_answers_reach_main_a_sections() -> None:
+    # Main-section conversation answers alternate PAD and LEAD, so the violin's answer
+    # stream exists in parts_a itself (pre-muting; bars=4 gives the two spans round-robin
+    # needs to reach LEAD). The entrance assertion — LEAD silent in body sections before
+    # lead_enters_section — lands in Task 8, which wires that muting in arrange.
+    beat = make_beat(style="chase", key="Dm", bpm=160, bars=4, n=1, seed=5)[0]
+    assert beat.parts_a[Role.LEAD]
+    unrolled = beat.unrolled()[Role.LEAD]
+    assert unrolled
+    cycle_ticks = beat.bars * 3840
+    a_ranges = []
+    cycle = 0
+    for s in beat.timeline.sections:
+        if s.kind == "a":
+            a_ranges.append((cycle * cycle_ticks, (cycle + s.cycles) * cycle_ticks))
+        cycle += s.cycles
+    assert a_ranges
+    assert any(lo <= e.tick < hi for e in unrolled for lo, hi in a_ranges)
